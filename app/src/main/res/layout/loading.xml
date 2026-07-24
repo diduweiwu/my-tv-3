@@ -10,12 +10,22 @@
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center" >
+        android:gravity="bottom|center_horizontal"
+        android:orientation="vertical"
+        android:paddingBottom="80dp">
 
         <androidx.core.widget.ContentLoadingProgressBar
             android:id="@+id/bar"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:indeterminateTint="@color/white"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/statusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/white"
+            android:textSize="14sp"/>
     </LinearLayout>
 </FrameLayout>

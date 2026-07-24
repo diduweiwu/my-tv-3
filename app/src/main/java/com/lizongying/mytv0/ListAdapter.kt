@@ -1,5 +1,6 @@
 package com.lizongying.mytv0
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -77,6 +78,7 @@ class ListAdapter(
         recyclerView.invalidate()
     }
 
+    @SuppressLint("RecyclerView")
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         listTVModel?.let {
             val tvModel = it.getTVModel(position)!!
@@ -142,6 +144,12 @@ class ListAdapter(
 
             view.setOnKeyListener { _, keyCode, event: KeyEvent? ->
                 if (event?.action == KeyEvent.ACTION_DOWN) {
+                    // Handle Enter/Confirm key to switch channel
+                    if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                        view.performClick()
+                        return@setOnKeyListener true
+                    }
+
                     if (keyCode == KeyEvent.KEYCODE_DPAD_UP && position == 0) {
                         val p = getItemCount() - 1
 
@@ -183,7 +191,7 @@ class ListAdapter(
                 false
             }
 
-            viewHolder.bindTitle(tvModel.tv.title)
+            viewHolder.bindTitle(tvModel)
 
             viewHolder.bindImage(tvModel)
         }
@@ -198,37 +206,43 @@ class ListAdapter(
         val imageHelper = application.imageHelper
 
 
-        fun bindTitle(text: String) {
-            binding.title.text = text
+        fun bindTitle(tvModel: TVModel) {
+            binding.title.text = tvModel.tv.title
         }
 
         fun bindImage(tvModel: TVModel) {
             val tv = tvModel.tv
-
-            val width = 300
-            val height = 180
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-
             val channelNum = if (tv.number == -1) tv.id.plus(1) else tv.number
-            var size = 150f
-            if (channelNum > 99) {
-                size = 100f
+            val cacheKey = channelNum.toString()
+            
+            var bitmap = bitmapCache[cacheKey]
+            if (bitmap == null) {
+                val width = 300
+                val height = 180
+                bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+
+                var size = 150f
+                if (channelNum > 99) {
+                    size = 100f
+                }
+                if (channelNum > 999) {
+                    size = 75f
+                }
+                val paint = Paint().apply {
+                    color = ContextCompat.getColor(context, R.color.title_blur)
+                    textSize = size
+                    textAlign = Paint.Align.CENTER
+                    isAntiAlias = true
+                }
+                val x = width / 2f
+                val y = height / 2f - (paint.descent() + paint.ascent()) / 2
+                canvas.drawText(cacheKey, x, y, paint)
+                bitmapCache[cacheKey] = bitmap
             }
-            if (channelNum > 999) {
-                size = 75f
-            }
-            val paint = Paint().apply {
-                color = ContextCompat.getColor(context, R.color.title_blur)
-                textSize = size
-                textAlign = Paint.Align.CENTER
-            }
-            val x = width / 2f
-            val y = height / 2f - (paint.descent() + paint.ascent()) / 2
-            canvas.drawText(channelNum.toString(), x, y, paint)
 
             val name = if (tv.name.isNotEmpty()) { tv.name } else { tv.title }
-            imageHelper.loadImage(name, binding.icon, bitmap, tv.logo)
+            imageHelper.loadImage(name, binding.icon, tv.logo)
         }
 
         fun focus(hasFocus: Boolean) {
@@ -237,7 +251,7 @@ class ListAdapter(
                 binding.root.setBackgroundResource(R.color.focus)
             } else {
                 binding.title.setTextColor(ContextCompat.getColor(context, R.color.title_blur))
-                binding.root.setBackgroundResource(R.color.blur)
+                binding.root.setBackgroundResource(0)
             }
         }
 
@@ -288,6 +302,7 @@ class ListAdapter(
 
     companion object {
         private const val TAG = "ListAdapter"
+        private val bitmapCache = mutableMapOf<String, Bitmap>()
     }
 }
 

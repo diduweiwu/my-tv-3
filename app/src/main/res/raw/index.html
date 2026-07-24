@@ -2,9 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的電視·〇</title>
     <style>
         body {
@@ -13,6 +11,7 @@
             padding: 1rem;
             background-color: #263238;
             color: #EEEEEE;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
         a {
@@ -22,12 +21,15 @@
         hr {
             margin-top: .5rem;
             margin-bottom: .5rem;
+            border: 0;
+            border-top: 1px solid #455A64;
         }
 
         label {
             display: inline-block;
             width: 100%;
             margin-bottom: .5rem;
+            font-weight: bold;
         }
 
         textarea {
@@ -72,22 +74,37 @@
         input[type="button"] {
             margin-left: .6rem;
             cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0 1rem;
+        }
+
+        input[type="button"]:hover {
+            background-color: #45a049;
         }
 
         .source-grey {
-            background-color: grey;
+            background-color: #37474F;
+            color: #EEEEEE !important;
         }
 
         .source-green {
-            background-color: darkslategray;
+            background-color: #2E7D32;
+            color: #EEEEEE !important;
         }
 
         .history {
             margin-top: 10px;
         }
 
-        .history > input[type="text"], .history > input[type="number"] {
-            color: #EEEEEE;
+        .remove {
+            background-color: #f44336 !important;
+        }
+
+        .remove:hover {
+            background-color: #da190b !important;
         }
 
         .message-box {
@@ -101,132 +118,239 @@
             opacity: 0;
             transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
             transform: translateX(100%);
+            z-index: 1000;
         }
 
         .message-box.show {
             opacity: 1;
             transform: translateX(0);
         }
+
+        /* Tab Styles */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #455A64;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: #90A4AE;
+            font-size: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            color: #EEEEEE;
+        }
+
+        .tab-btn.active {
+            color: #4CAF50;
+            border-bottom: 3px solid #4CAF50;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .item {
+            margin-bottom: 1.5rem;
+        }
     </style>
 </head>
 <body>
 <h1 class="title">我的電視·〇</h1>
-<h4>視頻源可以设置為地址/文本/文件其中之一</h4>
-<h4>視頻源文本轉換：<a target="_blank" href="https://lizongying.github.io/js-gua64/">六十四卦編碼</a></h4>
-<hr/>
+<h4 id="description">视频源可以设置为地址/文本/文件其中之一</h4>
 
-<div class="item">
-    <label for="uri" id="uri-label">視頻源地址</label>
-    <div class="container">
-        <input type="text" id="uri"/>
-        <input type="button" id="confirm-uri" value="新增" class="add"/>
-    </div>
-    <div id="sources-new"></div>
-    <div id="source"></div>
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-sources')" id="tab-sources-btn">视频源</button>
+    <button class="tab-btn" onclick="switchTab('tab-basic')" id="tab-basic-btn">基本设置</button>
+    <button class="tab-btn" onclick="switchTab('tab-network')" id="tab-network-btn">网络与插件</button>
 </div>
 
-<hr/>
-
-<div class="item">
-    <label for="plain-text" id="plain-text-label">視頻源文本</label>
-    <div class="container">
-        <textarea id="plain-text" rows="4"/></textarea>
-        <input type="button" id="confirm-plain-text" value="確認" class="confirm"/>
+<!-- Tab: Sources -->
+<div id="tab-sources" class="tab-content active">
+    <div class="item">
+        <label for="uri" id="uri-label">视频源地址</label>
+        <div class="container">
+            <input type="text" id="uri"/>
+            <input type="button" id="confirm-uri" value="新增" class="add"/>
+        </div>
+        <div id="sources-new"></div>
+        <div id="source"></div>
     </div>
-</div>
 
-<hr/>
+    <hr/>
 
-<div class="item">
-    <label for="upload-file" id="upload-file-label">視頻源文件，選擇後會自動上傳保存</label>
-    <div class="container">
-        <input type="file" id="upload-file" multiple/>
+    <div class="item">
+        <label for="plain-text" id="plain-text-label">视频源文本</label>
+        <div class="container">
+            <textarea id="plain-text" rows="6"></textarea>
+            <input type="button" id="confirm-plain-text" value="确认" class="confirm"/>
+        </div>
+        <p style="font-size: 0.8rem; color: #90A4AE; margin-top: 0.5rem;">
+            视频源文本转换：<a target="_blank" href="https://lizongying.github.io/js-gua64/">六十四卦编码</a>
+        </p>
     </div>
-</div>
 
-<hr/>
+    <hr/>
 
-<div class="item">
-    <label for="channel" id="channel-label">默認播放頻道號，從1開始。0代表默認設置</label>
-    <div class="container">
-        <input type="number" id="channel" min="0" max="99"/>
-        <input type="button" id="confirm-channel" value="確認" class="confirm"/>
-    </div>
-</div>
-
-<hr/>
-
-<div class="item">
-    <label for="epg" id="epg-label">EPG</label>
-    <div class="container">
-        <input type="text" id="epg"/>
-        <input type="button" id="confirm-epg" value="確認" class="confirm"/>
+    <div class="item">
+        <label for="upload-file" id="upload-file-label">视频源文件，选择后会自动上传保存</label>
+        <div class="container">
+            <input type="file" id="upload-file" multiple/>
+        </div>
     </div>
 </div>
 
-<hr/>
+<!-- Tab: Basic Settings -->
+<div id="tab-basic" class="tab-content">
+    <div class="item">
+        <label for="channel" id="channel-label">默认播放频道号，从1开始。0代表默认设置</label>
+        <div class="container">
+            <input type="number" id="channel" min="0" max="999"/>
+            <input type="button" id="confirm-channel" value="确认" class="confirm"/>
+        </div>
+    </div>
 
-<div class="item">
-    <label for="proxy" id="proxy-label">代理地址</label>
-    <div class="container">
-        <input type="text" id="proxy"/>
-        <input type="button" id="confirm-proxy" value="確認" placeholder="http://0.0.0.0:0" class="confirm"/>
+    <hr/>
+
+    <div class="item">
+        <label for="ui-alpha" id="ui-alpha-label">UI 透明度 (0-255)</label>
+        <div class="container">
+            <input type="range" id="ui-alpha" min="0" max="255" step="5" style="width: 100%"/>
+            <span id="ui-alpha-value" style="margin-left: 10px; min-width: 40px; text-align: right">255</span>
+        </div>
     </div>
 </div>
 
-<hr/>
+<!-- Tab: Network & Extra -->
+<div id="tab-network" class="tab-content">
+    <div class="item">
+        <label for="epg" id="epg-label">EPG 地址</label>
+        <div class="container">
+            <input type="text" id="epg" placeholder="http://..."/>
+            <input type="button" id="confirm-epg" value="确认" class="confirm"/>
+        </div>
+    </div>
+
+    <hr/>
+
+    <div class="item">
+        <label for="proxy" id="proxy-label">代理地址</label>
+        <div class="container">
+            <input type="text" id="proxy" placeholder="http://0.0.0.0:0"/>
+            <input type="button" id="confirm-proxy" value="确认" class="confirm"/>
+        </div>
+    </div>
+
+    <hr/>
+
+    <div class="item">
+        <label for="ua" id="ua-label">User Agent (自定义请求头)</label>
+        <div class="container">
+            <input type="text" id="ua" placeholder="Mozilla/5.0..."/>
+            <input type="button" id="confirm-ua" value="确认" class="confirm"/>
+        </div>
+    </div>
+</div>
 
 <div id="messageBox" class="message-box"></div>
 
-<div style="height: 100%"></div>
-</body>
 <script>
     const lang = {
         TRADITIONAL_CHINESE: {
             appName: '我的電視·〇',
-            description: '視頻源可以设置為地址/文本/文件其中之一',
+            description: '視頻源可以設置為地址/文本/文件其中之一',
+            tabSources: '視頻源',
+            tabBasic: '基本設置',
+            tabNetwork: '網絡与插件',
             uriLabel: '視頻源地址',
             plainTextLabel: '視頻源文本',
             uploadFileLabel: '視頻源文件，選擇後會自動上傳保存',
-            channelLabel: '默認播放頻道，從1開始。0代表默认設置',
-            epgLabel: 'EPG',
+            channelLabel: '默認播放頻道，從1開始。0代表默認設置',
+            uiAlphaLabel: 'UI 透明度 (0-255)',
+            epgLabel: 'EPG 地址',
             proxyLabel: '代理地址',
+            uaLabel: 'User Agent (自定義請求頭)',
             confirm: '確認',
             remove: '刪除',
             add: '新增',
+            success: '已確認',
+            empty: '內容為空',
+            invalidUri: '無效的地址',
         },
         SIMPLIFIED_CHINESE: {
             appName: '我的电视·〇',
             description: '视频源可以设置为地址/文本/文件其中之一',
+            tabSources: '视频源',
+            tabBasic: '基本设置',
+            tabNetwork: '网络与插件',
             uriLabel: '视频源地址',
             plainTextLabel: '视频源文本',
             uploadFileLabel: '视频源文件，选择后会自动上传保存',
-            channelLabel: '默认播放频道，从1开始。0代表默認设置',
-            epgLabel: 'EPG',
+            channelLabel: '默认播放频道，从1开始。0代表默认设置',
+            uiAlphaLabel: 'UI 透明度 (0-255)',
+            epgLabel: 'EPG 地址',
             proxyLabel: '代理地址',
+            uaLabel: 'User Agent (自定义请求头)',
             confirm: '确认',
             remove: '删除',
             add: '新增',
+            success: '已确认',
+            empty: '内容为空',
+            invalidUri: '无效的地址',
         }
     };
-    const t = (key) => lang['TRADITIONAL_CHINESE'][key];
-    document.querySelector('h1').innerText = t('appName');
-    document.querySelector('h4').innerText = t('description');
-    document.querySelector('#uri-label').innerText = t('uriLabel');
-    document.querySelector('#plain-text-label').innerText = t('plainTextLabel');
-    document.querySelector('#upload-file-label').innerText = t('uploadFileLabel');
-    document.querySelector('#channel-label').innerText = t('channelLabel');
-    document.querySelector('#epg-label').innerText = t('epgLabel');
-    document.querySelector('#proxy-label').innerText = t('proxyLabel');
-    document.querySelectorAll('.confirm').forEach(
-        i => i.value = t('confirm')
-    );
-    document.querySelectorAll('.add').forEach(
-        i => i.value = t('add')
-    );
+
+    let currentLang = 'SIMPLIFIED_CHINESE';
+    if (navigator.language.includes('TW') || navigator.language.includes('HK') || navigator.language.includes('Hant')) {
+        currentLang = 'TRADITIONAL_CHINESE';
+    }
+
+    const t = (key) => lang[currentLang][key];
+
+    function applyTranslations() {
+        document.querySelector('h1').innerText = t('appName');
+        document.querySelector('#description').innerText = t('description');
+        document.querySelector('#tab-sources-btn').innerText = t('tabSources');
+        document.querySelector('#tab-basic-btn').innerText = t('tabBasic');
+        document.querySelector('#tab-network-btn').innerText = t('tabNetwork');
+        document.querySelector('#uri-label').innerText = t('uriLabel');
+        document.querySelector('#plain-text-label').innerText = t('plainTextLabel');
+        document.querySelector('#upload-file-label').innerText = t('uploadFileLabel');
+        document.querySelector('#channel-label').innerText = t('channelLabel');
+        document.querySelector('#ui-alpha-label').innerText = t('uiAlphaLabel');
+        document.querySelector('#epg-label').innerText = t('epgLabel');
+        document.querySelector('#proxy-label').innerText = t('proxyLabel');
+        document.querySelector('#ua-label').innerText = t('uaLabel');
+        document.querySelectorAll('.confirm').forEach(i => i.value = t('confirm'));
+        document.querySelectorAll('.add').forEach(i => i.value = t('add'));
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        document.getElementById(tabId).classList.add('active');
+        document.getElementById(tabId + '-btn').classList.add('active');
+    }
 
     const source = document.querySelector('#source');
-
     const uploadFile = document.querySelector('#upload-file');
 
     uploadFile.onchange = function (e) {
@@ -235,76 +359,79 @@
 
     const handleFiles = async function (files) {
         for (let i = 0; i < files.length; i++) {
-            await read(files[i]);
+            await readFile(files[i]);
         }
     }
 
-    const read = async (file) => {
+    const readFile = async (file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             save('/api/import-text', e.target.result);
+            showMessage(t('success'));
         };
         reader.readAsText(file);
     }
 
-    ['#uri', '#plain-text', '#channel', '#epg', '#proxy'].forEach(e => {
+    ['#uri', '#plain-text', '#channel', '#epg', '#proxy', '#ua'].forEach(e => {
         const ele = document.querySelector(e);
-        ele.addEventListener('focus', () => {
-            ele.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
+        if (ele) {
+            ele.addEventListener('focus', () => {
+                ele.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
             });
-        });
-    })
+        }
+    });
 
     document.querySelector('#confirm-uri').onclick = () => {
         let uri = document.querySelector('#uri').value.trim();
         if (!uri) {
-            alert(`無效的地址${uri}`);
+            alert(`${t('invalidUri')}: ${uri}`);
             return;
         }
-        if (!uri.startsWith('http')) {
+        if (!uri.startsWith('http') && !uri.startsWith('rtsp') && !uri.startsWith('rtmp')) {
             uri = 'http://' + uri;
         }
-        if (!uri.startsWith('http')) {
-            alert(`無效的地址${uri}`);
-            return;
-        }
         if (!isValidUrl(uri)) {
-            alert(`無效的地址${uri}`);
+            alert(`${t('invalidUri')}: ${uri}`);
             return;
         }
         document.querySelector('#uri').value = uri;
 
-        if (uri.length > 0) {
-            const uuid = uuidV4()
-            save('/api/import-uri', JSON.stringify({
-                id: uuid,
-                uri: uri,
-            }))
-            showMessage('已確認', 3000);
-
-            let htmlString = `<div class="container history"><input type="text" readonly value="${uri}" class="source-grey"/><input type="button" value="删除" class="remove" data-source-id="${uuid}"/></div>`;
-            let doc = new DOMParser().parseFromString(htmlString, 'text/html');
-            const firstChild = source.firstChild;
-            if (firstChild) {
-                source.insertBefore(doc.body.firstChild, firstChild);
-            } else {
-                source.appendChild(doc.body.firstChild);
-            }
-
-            handleRemove()
-        }
+        const uuid = uuidV4()
+        save('/api/import-uri', JSON.stringify({
+            id: uuid,
+            uri: uri,
+        })).then(() => {
+            refreshHistory();
+        }).catch(e => {
+            console.error('Import failed', e);
+        });
+        showMessage(t('success'));
     }
 
     document.querySelector('#confirm-plain-text').onclick = () => {
         const content = document.querySelector('#plain-text').value.trim();
         if (content.length > 0) {
             save('/api/import-text', content)
-            showMessage('已確認', 3000);
+            showMessage(t('success'));
         } else {
-            alert(`內容為空`);
+            alert(t('empty'));
         }
+    }
+
+    const uiAlphaInput = document.querySelector('#ui-alpha');
+    const uiAlphaValue = document.querySelector('#ui-alpha-value');
+
+    uiAlphaInput.oninput = () => {
+        uiAlphaValue.innerText = uiAlphaInput.value;
+    }
+
+    uiAlphaInput.onchange = () => {
+        save('/api/ui-alpha', JSON.stringify({
+            uiAlpha: parseInt(uiAlphaInput.value)
+        }))
     }
 
     document.querySelector('#confirm-channel').onclick = () => {
@@ -313,19 +440,16 @@
             save('/api/default-channel', JSON.stringify({
                 channel: channel
             }))
-            showMessage('已確認', 3000);
+            showMessage(t('success'));
         } else {
-            alert(`內容為空`);
+            alert(t('empty'));
         }
     }
 
     document.querySelector('#confirm-epg').onclick = () => {
         const epg = document.querySelector('#epg').value.trim();
-        save('/api/epg', JSON.stringify({
-            epg: epg
-        }))
-
-        showMessage('已確認', 3000);
+        save('/api/epg', JSON.stringify({ epg: epg }))
+        showMessage(t('success'));
     }
 
     document.querySelector('#confirm-proxy').onclick = () => {
@@ -333,20 +457,19 @@
         if (proxy && (!proxy.startsWith('http') && !proxy.startsWith('socks'))) {
             proxy = 'http://' + proxy;
         }
-        if (proxy && (!proxy.startsWith('http') && !proxy.startsWith('socks'))) {
-            alert(`無效的地址${proxy}`);
-            return;
-        }
         if (proxy && !isValidUrl(proxy)) {
-            alert(`無效的地址${proxy}`);
+            alert(`${t('invalidUri')}: ${proxy}`);
             return;
         }
         document.querySelector('#proxy').value = proxy;
-        save('/api/proxy', JSON.stringify({
-            proxy: proxy
-        }))
+        save('/api/proxy', JSON.stringify({ proxy: proxy }))
+        showMessage(t('success'));
+    }
 
-        showMessage('已確認', 3000);
+    document.querySelector('#confirm-ua').onclick = () => {
+        const ua = document.querySelector('#ua').value.trim();
+        save('/api/ua', JSON.stringify({ ua: ua }))
+        showMessage(t('success'));
     }
 
     const save = async (url, body) => {
@@ -354,20 +477,23 @@
             method: 'POST',
             body: body
         });
-        const json = await response.text();
-        console.log(json);
+        if (!response.ok) {
+            throw new Error('HTTP error: ' + response.status);
+        }
+        return await response.text();
     }
 
     const handleRemove = () => {
         const removes = document.querySelectorAll('.remove');
-        [...removes].forEach(remove => {
-            remove.value = t('remove');
+        removes.forEach(remove => {
             remove.onclick = () => {
                 const sourceId = remove.dataset.sourceId.trim();
-                console.log('sourceId', sourceId);
-                save('/api/remove-source', JSON.stringify({
-                    sourceId: sourceId
-                }))
+                save('/api/remove-source', JSON.stringify({ sourceId: sourceId })).then(() => {
+                    refreshHistory();
+                }).catch(e => {
+                    console.error('Remove failed', e);
+                    showMessage(t('removeFailed') || '删除失败');
+                });
                 remove.parentElement.remove()
             }
         })
@@ -375,21 +501,20 @@
 
     const handleAdd = () => {
         const addList = document.querySelectorAll('.new-source');
-        [...addList].forEach(add => {
-            add.value = t('add');
+        addList.forEach(add => {
             add.onclick = () => {
                 const uri = add.dataset.uri.trim();
-                console.log('uri', uri);
-
                 const uuid = uuidV4();
-                save('/api/import-uri', JSON.stringify({
-                    id: uuid,
-                    uri: uri,
-                }));
-
+                save('/api/import-uri', JSON.stringify({ id: uuid, uri: uri })).then(() => {
+                    // Refresh the history list after successful import
+                    refreshHistory();
+                }).catch(e => {
+                    console.error('Import failed', e);
+                    showMessage(t('importFailed') || '导入失败');
+                });
                 add.parentElement.remove();
 
-                let htmlString = `<div class="container history"><input type="text" readonly value="${uri}" class="source-grey"/><input type="button" value="删除" class="remove" data-source-id="${uuid}"/></div>`;
+                let htmlString = `<div class="container history"><input type="text" readonly value="${uri}" class="source-grey"/><input type="button" value="${t('remove')}" class="remove" data-source-id="${uuid}"/></div>`;
                 let doc = new DOMParser().parseFromString(htmlString, 'text/html');
                 const firstChild = source.firstChild;
                 if (firstChild) {
@@ -397,9 +522,7 @@
                 } else {
                     source.appendChild(doc.body.firstChild);
                 }
-
                 handleRemove();
-
                 document.querySelector('#uri').value = uri;
             }
         })
@@ -420,52 +543,74 @@
         }
     }
 
-    (async () => {
-        const response = await fetch('/api/settings');
-        const json = await response.json();
-        console.log(json);
-        document.querySelector('#channel').value = json.channelDefault;
-        document.querySelector('#uri').value = json.channelUri;
-        document.querySelector('#plain-text').value = json.channelText;
-        document.querySelector('#epg').value = json.epg;
-        document.querySelector('#proxy').value = json.proxy;
-
-        json.history.forEach(v => {
-            let htmlString = `<div class="container history"><input type="text" readonly value="${v.uri}" class="source-grey"/><input type="button" value="删除" class="remove" data-source-id="${v.id}"/></div>`;
-            let doc = new DOMParser().parseFromString(htmlString, 'text/html');
-            source.appendChild(doc.body.firstChild);
-        })
-
-        handleRemove()
-
-        const sources = await fetch('/api/sources');
-        const sourcesText = await sources.text();
-        console.log(sourcesText);
-
-        const histories = json.history.map(v => v.uri)
-
-        const sourcesNew = document.querySelector('#sources-new');
-        sourcesText.trim().split("\n").forEach(v => {
-            if (histories.includes(v)) {
-                return
-            }
-
-            let htmlString = `<div class="container history"><input type="text" readonly value="${v}" class="source-green"/><input type="button" value="新增" class="add new-source" data-uri="${v}"/></div>`;
-            let doc = new DOMParser().parseFromString(htmlString, 'text/html');
-            sourcesNew.appendChild(doc.body.firstChild);
-        })
-
-        handleAdd()
-    })()
-
     const showMessage = (message, duration = 3000) => {
         const messageBox = document.getElementById('messageBox');
         messageBox.textContent = message;
         messageBox.classList.add('show');
-
         setTimeout(() => {
             messageBox.classList.remove('show');
         }, duration);
     }
+
+    const refreshHistory = async (retryCount = 0) => {
+        try {
+            const response = await fetch('/api/settings');
+            const json = await response.json();
+
+            source.innerHTML = '';
+            json.history.forEach(v => {
+                let htmlString = `<div class="container history"><input type="text" readonly value="${v.uri}" class="source-grey"/><input type="button" value="${t('remove')}" class="remove" data-source-id="${v.id}"/></div>`;
+                let doc = new DOMParser().parseFromString(htmlString, 'text/html');
+                source.appendChild(doc.body.firstChild);
+            });
+            handleRemove();
+        } catch (e) {
+            console.error('Refresh history failed', e);
+            if (retryCount < 3) {
+                setTimeout(() => refreshHistory(retryCount + 1), 1000);
+            }
+        }
+    }
+
+    (async () => {
+        applyTranslations();
+        try {
+            const response = await fetch('/api/settings');
+            const json = await response.json();
+
+            document.querySelector('#channel').value = json.channelDefault;
+            document.querySelector('#ui-alpha').value = json.uiAlpha;
+            document.querySelector('#ui-alpha-value').innerText = json.uiAlpha;
+            document.querySelector('#uri').value = json.channelUri;
+            document.querySelector('#plain-text').value = json.channelText;
+            document.querySelector('#epg').value = json.epg;
+            document.querySelector('#proxy').value = json.proxy;
+            document.querySelector('#ua').value = json.ua || '';
+
+            json.history.forEach(v => {
+                let htmlString = `<div class="container history"><input type="text" readonly value="${v.uri}" class="source-grey"/><input type="button" value="${t('remove')}" class="remove" data-source-id="${v.id}"/></div>`;
+                let doc = new DOMParser().parseFromString(htmlString, 'text/html');
+                source.appendChild(doc.body.firstChild);
+            })
+            handleRemove();
+
+            const sourcesRes = await fetch('/api/sources');
+            const sourcesText = await sourcesRes.text();
+            const histories = json.history.map(v => v.uri);
+            const sourcesNew = document.querySelector('#sources-new');
+
+            sourcesText.trim().split("\n").forEach(v => {
+                if (v && !histories.includes(v)) {
+                    let htmlString = `<div class="container history"><input type="text" readonly value="${v}" class="source-green"/><input type="button" value="${t('add')}" class="add new-source" data-uri="${v}"/></div>`;
+                    let doc = new DOMParser().parseFromString(htmlString, 'text/html');
+                    sourcesNew.appendChild(doc.body.firstChild);
+                }
+            })
+            handleAdd();
+        } catch (e) {
+            console.error('Initialization failed', e);
+        }
+    })();
 </script>
+</body>
 </html>

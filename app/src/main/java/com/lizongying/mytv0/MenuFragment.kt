@@ -68,12 +68,12 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         binding.list.adapter = listAdapter
         binding.list.layoutManager =
             LinearLayoutManager(context)
-        listWidth = application.px2Px(binding.list.layoutParams.width)
-        binding.list.layoutParams.width = if (SP.compactMenu) {
-            listWidth * 4 / 5
-        } else {
-            listWidth
-        }
+        
+        // Set list width to one third of screen width
+        val screenWidth = resources.displayMetrics.widthPixels
+        val listWidth = screenWidth / 3
+        binding.list.layoutParams.width = listWidth
+        
         listAdapter.setItemListener(this)
 
         binding.menu.setOnClickListener {
@@ -84,6 +84,11 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
 
         groupAdapter.focusable(true)
         listAdapter.focusable(true)
+
+        viewModel.uiAlpha.observe(viewLifecycleOwner) { alpha ->
+            binding.group.background?.alpha = alpha
+            binding.list.background?.alpha = alpha
+        }
 
         onVisible()
     }
@@ -120,6 +125,9 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
                 groupWidth
             }
 
+            // Set list width to one third of screen width
+            val screenWidth = resources.displayMetrics.widthPixels
+            val listWidth = screenWidth / 3
             binding.list.layoutParams.width = if (SP.compactMenu) {
                 listWidth * 4 / 5
             } else {
@@ -166,6 +174,13 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
             Log.e(TAG, "viewModel is not initialized")
             return
         }
+
+        viewModel.groupModel.getTVListModel(position)?.let { listModel ->
+            if (listModel.size() > 0) {
+                // Switch to the first channel of the group
+                onItemClicked(0, "list")
+            }
+        }
     }
 
     override fun onItemClicked(position: Int, type: String) {
@@ -178,7 +193,9 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         viewModel.groupModel.getCurrentList()?.let {
             it.setPosition(position)
             it.setPositionPlaying()
-            it.getCurrent()?.setReady()
+            val tvModel = it.getCurrent()
+            viewModel.setCurrentTVModel(tvModel)
+            tvModel?.setReady()
         }
 
         requireActivity().supportFragmentManager.beginTransaction()
@@ -194,10 +211,13 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
                     return true
                 }
 
-//                binding.group.visibility = GONE
-//                groupAdapter.focusable(false)
-//                listAdapter.focusable(true)
-
+                // Move focus to list and navigate to current playing position
+                groupAdapter.focusable(false)
+                listAdapter.focusable(true)
+                
+                // Refresh group list to show active highlight
+                groupAdapter.notifyDataSetChanged()
+                
                 if (viewModel.groupModel.positionPlayingValue == viewModel.groupModel.positionValue) {
                     viewModel.groupModel.getCurrentList()?.let {
                         listAdapter.toPosition(it.positionPlayingValue)
@@ -215,10 +235,10 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
     override fun onKey(listAdapter: ListAdapter, keyCode: Int): Boolean {
         when (keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT -> {
-//                binding.group.visibility = VISIBLE
-//                groupAdapter.focusable(true)
-//                listAdapter.focusable(false)
+                // Move focus back to group list
                 listAdapter.clear()
+                groupAdapter.focusable(true)
+                listAdapter.focusable(false)
                 groupAdapter.scrollToPositionAndSelect(viewModel.groupModel.positionValue)
                 return true
             }
@@ -239,6 +259,12 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         ) {
             updateList(position)
         }
+        groupAdapter.activePosition = position
+        groupAdapter.notifyDataSetChanged()
+        
+        // Scroll group list to active position but don't force focus on it
+        (binding.group.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(position, 0)
+        
         viewModel.groupModel.getCurrentList()?.let {
             listAdapter.toPosition(it.positionPlayingValue)
         }
@@ -268,6 +294,6 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
     }
 
     companion object {
-        private const val TAG = "MenuFragment"
+        const val TAG = "MenuFragment"
     }
 }

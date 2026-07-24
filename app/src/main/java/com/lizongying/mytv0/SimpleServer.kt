@@ -21,6 +21,8 @@ import com.lizongying.mytv0.requests.HttpClient
 import fi.iki.elonen.NanoHTTPD
 import io.github.lizongying.Gua
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -47,6 +49,8 @@ class SimpleServer(private val context: Context, private val viewModel: MainView
             "/api/import-uri" -> handleImportUri(session)
             "/api/proxy" -> handleProxy(session)
             "/api/epg" -> handleEPG(session)
+            "/api/ua" -> handleUA(session)
+            "/api/ui-alpha" -> handleUIAlpha(session)
             "/api/default-channel" -> handleDefaultChannel(session)
             "/api/remove-source" -> handleRemoveSource(session)
             else -> handleStaticContent()
@@ -85,6 +89,8 @@ class SimpleServer(private val context: Context, private val viewModel: MainView
                 channelDefault = SP.channel,
                 proxy = SP.proxy ?: "",
                 epg = SP.epg ?: "",
+                ua = SP.ua ?: "",
+                uiAlpha = SP.uiAlpha,
                 history = history
             )
             response = gson.toJson(respSettings) ?: ""
@@ -167,9 +173,20 @@ class SimpleServer(private val context: Context, private val viewModel: MainView
             readBody(session)?.let {
                 val req = gson.fromJson(it, ReqSourceAdd::class.java)
                 val uri = Uri.parse(req.uri)
+                Log.i(TAG, "handleImportUri: uri=$uri, id=${req.id}")
+                val latch = java.util.concurrent.CountDownLatch(1)
                 handler.post {
-                    viewModel.importFromUri(uri, req.id)
+                    GlobalScope.launch {
+                        try {
+                            viewModel.importFromUri(uri, req.id)
+                            Log.i(TAG, "handleImportUri: import completed")
+                        } finally {
+                            latch.countDown()
+                        }
+                    }
                 }
+                latch.await()
+                Log.i(TAG, "handleImportUri: latch released")
             }
         } catch (e: Exception) {
             Log.e(TAG, "handleImportUri", e)
@@ -225,6 +242,54 @@ class SimpleServer(private val context: Context, private val viewModel: MainView
             }
         } catch (e: Exception) {
             Log.e(TAG, "handleEPG", e)
+            return newFixedLengthResponse(
+                Response.Status.INTERNAL_ERROR,
+                MIME_PLAINTEXT,
+                e.message
+            )
+        }
+        val response = ""
+        return newFixedLengthResponse(Response.Status.OK, "text/plain", response)
+    }
+
+    private fun handleUA(session: IHTTPSession): Response {
+        try {
+            readBody(session)?.let {
+                handler.post {
+                    val req = gson.fromJson(it, ReqSettings::class.java)
+                    if (req.ua != null) {
+                        SP.ua = req.ua
+                        R.string.default_ua_set_success.showToast()
+                    } else {
+                        R.string.default_ua_set_failure.showToast()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "handleUA", e)
+            return newFixedLengthResponse(
+                Response.Status.INTERNAL_ERROR,
+                MIME_PLAINTEXT,
+                e.message
+            )
+        }
+        val response = ""
+        return newFixedLengthResponse(Response.Status.OK, "text/plain", response)
+    }
+
+    private fun handleUIAlpha(session: IHTTPSession): Response {
+        try {
+            readBody(session)?.let {
+                handler.post {
+                    val req = gson.fromJson(it, ReqSettings::class.java)
+                    if (req.uiAlpha != null) {
+                        SP.uiAlpha = req.uiAlpha
+                        viewModel.updateUIAlpha()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "handleUIAlpha", e)
             return newFixedLengthResponse(
                 Response.Status.INTERNAL_ERROR,
                 MIME_PLAINTEXT,

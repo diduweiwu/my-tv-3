@@ -29,12 +29,21 @@ class LoadingFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
     }
 
+    fun showProgress(text: String) {
+        binding.statusText.text = text
+        binding.bar.show()
+    }
+
+    fun hideProgress() {
+        binding.bar.hide()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 
     companion object {
-        private const val TAG = "LoadingFragment"
+        const val TAG = "LoadingFragment"
     }
 }

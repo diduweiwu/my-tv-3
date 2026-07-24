@@ -21,8 +21,27 @@ android {
         viewBinding = true
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -40,6 +59,24 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val abi = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
+            if (abi != null) {
+                val abiMultiplier = mapOf(
+                    "armeabi-v7a" to 1,
+                    "arm64-v8a" to 2,
+                    "x86" to 3,
+                    "x86_64" to 4
+                )[abi] ?: 0
+                val baseVersionCode = variant.outputs.first().versionCode.get()
+                output.versionCode.set(baseVersionCode + abiMultiplier)
+            }
+        }
     }
 }
 

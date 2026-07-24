@@ -52,13 +52,17 @@ class ProgramAdapter(
             }
         }
 
+        view.setOnClickListener {
+            listener?.onItemClicked()
+        }
+
         view.setOnKeyListener { _, keyCode, event: KeyEvent? ->
-            if (event?.action == KeyEvent.ACTION_UP) {
-                if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+            if (event?.action == KeyEvent.ACTION_DOWN) {
+                if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                    view.performClick()
                     return@setOnKeyListener true
                 }
-            }
-            if (event?.action == KeyEvent.ACTION_DOWN) {
+
                 // If it is already the first item and you continue to move up...
                 if (keyCode == KeyEvent.KEYCODE_DPAD_UP && position == 0) {
                     val p = getItemCount() - 1
@@ -117,10 +121,16 @@ class ProgramAdapter(
 
         fun focus(hasFocus: Boolean, isCurrent: Boolean) {
             if (hasFocus) {
-                val color = ContextCompat.getColor(context, R.color.focus)
+                val color = ContextCompat.getColor(context, R.color.white)
                 binding.title.setTextColor(color)
                 binding.description.setTextColor(color)
+                binding.title.paint.isFakeBoldText = true
+                binding.description.paint.isFakeBoldText = true
+                binding.root.setBackgroundResource(R.color.focus)
             } else {
+                binding.root.setBackgroundResource(0)
+                binding.title.paint.isFakeBoldText = false
+                binding.description.paint.isFakeBoldText = false
                 if (isCurrent) {
                     val color = ContextCompat.getColor(context, R.color.white)
                     binding.title.setTextColor(color)
@@ -151,6 +161,7 @@ class ProgramAdapter(
 
     interface ItemListener {
         fun onItemFocusChange(epg: EPG, hasFocus: Boolean)
+        fun onItemClicked()
         fun onKey(keyCode: Int): Boolean
     }
 

@@ -48,6 +48,7 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
 
         val context = requireActivity()
         val application = context.applicationContext as MyTVApplication
+
         val sourcesAdapter = SourcesAdapter(
             context,
             binding.list,
@@ -70,6 +71,7 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
 
         viewModel.sources.added.observe(this) { items ->
             sourcesAdapter.added(items.first)
+            checkEmpty()
         }
 
         viewModel.sources.changed.observe(this) { _ ->

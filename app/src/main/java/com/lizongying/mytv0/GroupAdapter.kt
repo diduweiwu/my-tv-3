@@ -1,5 +1,6 @@
 package com.lizongying.mytv0
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import android.view.KeyEvent
@@ -27,6 +28,8 @@ class GroupAdapter(
     private var focused: View? = null
     private var defaultFocused = false
     private var defaultFocus: Int = -1
+
+    var activePosition: Int = -1
 
     var visible = false
 
@@ -65,6 +68,7 @@ class GroupAdapter(
         recyclerView.invalidate()
     }
 
+    @SuppressLint("RecyclerView")
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         val listTVModel = tvGroupModel.getTVListModel(position)!!
         val view = viewHolder.itemView
@@ -110,18 +114,12 @@ class GroupAdapter(
         }
 
         view.setOnKeyListener { _, keyCode, event: KeyEvent? ->
-            if (event?.action == KeyEvent.ACTION_UP) {
-                recyclerView.postDelayed({
-                    val oldLikeMode = tvGroupModel.isInLikeMode;
-                    tvGroupModel.isInLikeMode = position == 0
-                    if (tvGroupModel.isInLikeMode) {
-//                        R.string.favorite_mode.showToast()
-                    } else if (oldLikeMode) {
-//                        R.string.standard_mode.showToast()
-                    }
-                }, 500)
-            }
             if (event?.action == KeyEvent.ACTION_DOWN) {
+                // Handle Enter/Confirm key
+                if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                    view.performClick()
+                    return@setOnKeyListener true
+                }
 
                 // If it is already the first item and you continue to move up...
                 if (keyCode == KeyEvent.KEYCODE_DPAD_UP && position == 0) {
@@ -161,6 +159,7 @@ class GroupAdapter(
         }
 
         viewHolder.bindTitle(listTVModel.getName())
+        viewHolder.focus(view.hasFocus(), position == activePosition)
     }
 
     override fun getItemCount() = tvGroupModel.size()
@@ -175,16 +174,23 @@ class GroupAdapter(
             }
         }
 
-        fun focus(hasFocus: Boolean) {
+        fun focus(hasFocus: Boolean, isActive: Boolean = false) {
             if (hasFocus) {
-                binding.title.setTextColor(ContextCompat.getColor(context, R.color.focus))
+                binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
+                binding.root.setBackgroundResource(R.color.focus)
             } else {
-                binding.title.setTextColor(
-                    ContextCompat.getColor(
-                        context,
-                        R.color.title_blur
+                if (isActive) {
+                    binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
+                    binding.root.setBackgroundColor(android.graphics.Color.parseColor("#400096A6"))
+                } else {
+                    binding.title.setTextColor(
+                        ContextCompat.getColor(
+                            context,
+                            R.color.title_blur
+                        )
                     )
-                )
+                    binding.root.setBackgroundResource(0)
+                }
             }
         }
     }

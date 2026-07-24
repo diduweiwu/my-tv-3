@@ -19,11 +19,11 @@ import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
-import androidx.media3.exoplayer.mediacodec.MediaCodecUtil
 import com.lizongying.mytv0.data.SourceType
 import com.lizongying.mytv0.databinding.PlayerBinding
 import com.lizongying.mytv0.models.TVModel
+import MainViewModel
+import androidx.lifecycle.ViewModelProvider
 
 
 class PlayerFragment : Fragment() {
@@ -64,10 +64,8 @@ class PlayerFragment : Fragment() {
         val playerView = binding.playerView
 
         val renderersFactory = DefaultRenderersFactory(ctx)
-        val playerMediaCodecSelector = PlayerMediaCodecSelector()
-        renderersFactory.setMediaCodecSelector(playerMediaCodecSelector)
         renderersFactory.setExtensionRendererMode(
-            if (SP.softDecode) DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER else DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
+            if (SP.softDecode) DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER else DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF
         )
 
         if (player != null) {
@@ -92,6 +90,7 @@ class PlayerFragment : Fragment() {
                         (playerView.measuredHeight.times(aspectRatio)).toInt()
                     playerView.layoutParams = layoutParams
                 }
+                updateVideoInfo()
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -112,6 +111,7 @@ class PlayerFragment : Fragment() {
                 } else {
                     Log.i(TAG, "${tv.tv.title} 播放停止")
                 }
+                updateVideoInfo()
             }
 
             override fun onPositionDiscontinuity(
@@ -167,8 +167,68 @@ class PlayerFragment : Fragment() {
     }
 
     @OptIn(UnstableApi::class)
+    private fun updateVideoInfo() {
+        player?.let { p ->
+            var videoFormat: androidx.media3.common.Format? = p.videoFormat
+            
+            // Fallback to searching tracks if videoFormat is null or incomplete
+            if (videoFormat == null || videoFormat.width <= 0) {
+                val tracks = p.currentTracks
+                for (group in tracks.groups) {
+                    if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO && group.isSelected) {
+                        for (i in 0 until group.length) {
+                            if (group.isTrackSelected(i)) {
+                                videoFormat = group.getTrackFormat(i)
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (videoFormat != null && videoFormat!!.width > 0) {
+                val format = videoFormat!!
+                val width = format.width
+                val height = format.height
+                val fps = if (format.frameRate > 0) "${format.frameRate.toInt()}fps" else ""
+                val resolution = "${width}x${height}"
+                
+                val infoList = mutableListOf<String>()
+                infoList.add(resolution)
+                if (fps.isNotEmpty()) infoList.add(fps)
+                
+                val info = infoList.joinToString(" | ")
+                if (isAdded) {
+                    val viewModel = ViewModelProvider(requireActivity())[MainViewModel::class.java]
+                    viewModel.setVideoFormatInfo(info)
+                }
+                handler.removeCallbacks(videoInfoRunnable)
+            } else {
+                handler.removeCallbacks(videoInfoRunnable)
+                handler.postDelayed(videoInfoRunnable, 1000)
+            }
+        }
+    }
+
+    private val videoInfoRunnable = Runnable {
+        updateVideoInfo()
+    }
+
+    @OptIn(UnstableApi::class)
     fun play(tvModel: TVModel) {
         this.tvModel = tvModel
+        player?.stop()
+        player?.clearMediaItems()
+        
+        // Reset layout params to prevent scaling artifacts from previous channel
+        binding.playerView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+        binding.playerView.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
+        binding.playerView.requestLayout()
+
+        if (isAdded) {
+            val viewModel = ViewModelProvider(requireActivity())[MainViewModel::class.java]
+            viewModel.setVideoFormatInfo("")
+        }
         player?.run {
             tvModel.getVideoUrl() ?: return
 
@@ -192,31 +252,6 @@ class PlayerFragment : Fragment() {
                 prepare()
                 break
             }
-        }
-    }
-
-    @OptIn(UnstableApi::class)
-    class PlayerMediaCodecSelector : MediaCodecSelector {
-        override fun getDecoderInfos(
-            mimeType: String,
-            requiresSecureDecoder: Boolean,
-            requiresTunnelingDecoder: Boolean
-        ): MutableList<androidx.media3.exoplayer.mediacodec.MediaCodecInfo> {
-            val infos = MediaCodecUtil.getDecoderInfos(
-                mimeType,
-                requiresSecureDecoder,
-                requiresTunnelingDecoder
-            )
-            if (mimeType == MimeTypes.VIDEO_H265 && !requiresSecureDecoder && !requiresTunnelingDecoder) {
-                if (infos.isNotEmpty()) {
-                    val infosNew = infos.find { it.name == "c2.android.hevc.decoder" }
-                        ?.let { mutableListOf(it) }
-                    if (infosNew != null) {
-                        return infosNew
-                    }
-                }
-            }
-            return infos
         }
     }
 
@@ -286,6 +321,6 @@ class PlayerFragment : Fragment() {
     }
 
     companion object {
-        private const val TAG = "PlayerFragment"
+        const val TAG = "PlayerFragment"
     }
 }

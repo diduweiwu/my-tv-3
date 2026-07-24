@@ -5,22 +5,31 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:clickable="true"
-    android:focusable="false"
-    >
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/group"
-            android:layout_width="200dp"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="1dp"
-            android:padding="10dp"
-            android:background="@color/blur"
-            >
-        </androidx.recyclerview.widget.RecyclerView>
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/list"
-            android:layout_width="250dp"
-            android:layout_height="wrap_content"
-            >
-        </androidx.recyclerview.widget.RecyclerView>
+    android:focusable="false">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/group"
+        android:layout_width="200dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_menu_panel"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:clipToPadding="false"
+        android:scrollbars="none" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/list"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginStart="2dp"
+        android:background="@drawable/bg_menu_panel"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:clipToPadding="false"
+        android:scrollbars="none" />
 
 </LinearLayout>

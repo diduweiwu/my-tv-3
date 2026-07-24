@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.lizongying.mytv0.data.EPG
 import com.lizongying.mytv0.databinding.ProgramBinding
+import MainViewModel
 
 class ProgramFragment : Fragment(), ProgramAdapter.ItemListener {
     private var _binding: ProgramBinding? = null
@@ -38,6 +39,10 @@ class ProgramFragment : Fragment(), ProgramAdapter.ItemListener {
 
         binding.program.setOnClickListener {
             hideSelf()
+        }
+
+        viewModel.uiAlpha.observe(viewLifecycleOwner) { alpha ->
+            binding.list.background?.alpha = alpha
         }
 
         onVisible()
@@ -105,11 +110,15 @@ class ProgramFragment : Fragment(), ProgramAdapter.ItemListener {
         handler.postDelayed(hideRunnable, delay)
     }
 
+    override fun onItemClicked() {
+        hideSelf()
+    }
+
     override fun onKey(keyCode: Int): Boolean {
         return false
     }
 
     companion object {
-        private const val TAG = "ProgramFragment"
+        const val TAG = "ProgramFragment"
     }
 }

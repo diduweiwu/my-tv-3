@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.dash.DashMediaSource
 import androidx.media3.exoplayer.hls.HlsMediaSource
@@ -19,7 +19,6 @@ import com.lizongying.mytv0.SP
 import com.lizongying.mytv0.data.EPG
 import com.lizongying.mytv0.data.SourceType
 import com.lizongying.mytv0.data.TV
-import com.lizongying.mytv0.requests.HttpClient
 import kotlin.math.max
 import kotlin.math.min
 
@@ -116,18 +115,25 @@ class TVModel(var tv: TV) : ViewModel() {
             val path = uri.path ?: return@let null
             val scheme = uri.scheme ?: return@let null
 
-            val okHttpDataSource = OkHttpDataSource.Factory(HttpClient.okHttpClient)
-            tv.headers?.let { i ->
-                okHttpDataSource.setDefaultRequestProperties(i)
-                i.forEach { (key, value) ->
+            val httpDataSource = DefaultHttpDataSource.Factory()
+            val headers = tv.headers?.toMutableMap() ?: mutableMapOf()
+            if (!SP.ua.isNullOrEmpty()) {
+                val hasUa = headers.keys.any { it.equals("user-agent", ignoreCase = true) }
+                if (!hasUa) {
+                    headers["User-Agent"] = SP.ua!!
+                }
+            }
+
+            if (headers.isNotEmpty()) {
+                httpDataSource.setDefaultRequestProperties(headers)
+                headers.forEach { (key, value) ->
                     if (key.equals("user-agent", ignoreCase = true)) {
                         userAgent = value
-                        return@forEach
                     }
                 }
             }
 
-            _httpDataSource = okHttpDataSource
+            _httpDataSource = httpDataSource
 
             sourceTypeList = if (path.lowercase().endsWith(".m3u8")) {
                 listOf(SourceType.HLS)

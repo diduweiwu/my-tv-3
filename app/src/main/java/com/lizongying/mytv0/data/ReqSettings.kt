@@ -5,4 +5,6 @@ data class ReqSettings(
     val proxy: String?,
     val epg: String?,
     val channel: Int?,
+    val ua: String?,
+    val uiAlpha: Int?,
 )

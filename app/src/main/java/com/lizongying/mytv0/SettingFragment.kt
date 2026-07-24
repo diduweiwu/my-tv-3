@@ -5,19 +5,16 @@ import MainViewModel.Companion.CACHE_FILE_NAME
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.marginBottom
-import androidx.core.view.marginEnd
-import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.lizongying.mytv0.ModalFragment.Companion.KEY_URL
@@ -52,77 +49,91 @@ class SettingFragment : Fragment() {
         _binding = SettingBinding.inflate(inflater, container, false)
 
         binding.versionName.text = "v${context.appVersionName}"
-        binding.version.text = "https://github.com/lizongying/my-tv-0"
 
-        val switchChannelReversal = _binding?.switchChannelReversal
-        switchChannelReversal?.isChecked = SP.channelReversal
-        switchChannelReversal?.setOnCheckedChangeListener { _, isChecked ->
+        val switchChannelReversal = binding.switchChannelReversal
+        switchChannelReversal.isChecked = SP.channelReversal
+        switchChannelReversal.setOnCheckedChangeListener { _, isChecked ->
             SP.channelReversal = isChecked
             mainActivity.settingActive()
         }
 
-        val switchChannelNum = _binding?.switchChannelNum
-        switchChannelNum?.isChecked = SP.channelNum
-        switchChannelNum?.setOnCheckedChangeListener { _, isChecked ->
-            SP.channelNum = isChecked
-            mainActivity.settingActive()
-        }
-
-        val switchTime = _binding?.switchTime
-        switchTime?.isChecked = SP.time
-        switchTime?.setOnCheckedChangeListener { _, isChecked ->
+        val switchTime = binding.switchTime
+        switchTime.isChecked = SP.time
+        switchTime.setOnCheckedChangeListener { _, isChecked ->
             SP.time = isChecked
             mainActivity.settingActive()
         }
 
-        val switchBootStartup = _binding?.switchBootStartup
-        switchBootStartup?.isChecked = SP.bootStartup
-        switchBootStartup?.setOnCheckedChangeListener { _, isChecked ->
+        val switchBootStartup = binding.switchBootStartup
+        switchBootStartup.isChecked = SP.bootStartup
+        switchBootStartup.setOnCheckedChangeListener { _, isChecked ->
             SP.bootStartup = isChecked
             mainActivity.settingActive()
         }
 
-        val switchRepeatInfo = _binding?.switchRepeatInfo
-        switchRepeatInfo?.isChecked = SP.repeatInfo
-        switchRepeatInfo?.setOnCheckedChangeListener { _, isChecked ->
+        val switchRepeatInfo = binding.switchRepeatInfo
+        switchRepeatInfo.isChecked = SP.repeatInfo
+        switchRepeatInfo.setOnCheckedChangeListener { _, isChecked ->
             SP.repeatInfo = isChecked
             mainActivity.settingActive()
         }
 
-        val switchConfigAutoLoad = _binding?.switchConfigAutoLoad
-        switchConfigAutoLoad?.isChecked = SP.configAutoLoad
-        switchConfigAutoLoad?.setOnCheckedChangeListener { _, isChecked ->
+        val switchConfigAutoLoad = binding.switchConfigAutoLoad
+        switchConfigAutoLoad.isChecked = SP.configAutoLoad
+        switchConfigAutoLoad.setOnCheckedChangeListener { _, isChecked ->
             SP.configAutoLoad = isChecked
             mainActivity.settingActive()
         }
 
-        val switchDefaultLike = _binding?.switchDefaultLike
-        switchDefaultLike?.isChecked = SP.defaultLike
-        switchDefaultLike?.setOnCheckedChangeListener { _, isChecked ->
+        val switchDefaultLike = binding.switchDefaultLike
+        switchDefaultLike.isChecked = SP.defaultLike
+        switchDefaultLike.setOnCheckedChangeListener { _, isChecked ->
             SP.defaultLike = isChecked
             mainActivity.settingActive()
         }
 
-        val switchShowAllChannels = _binding?.switchShowAllChannels
-        switchShowAllChannels?.isChecked = SP.showAllChannels
+        val switchShowAllChannels = binding.switchShowAllChannels
+        switchShowAllChannels.isChecked = SP.showAllChannels
 
-        val switchCompactMenu = _binding?.switchCompactMenu
-        switchCompactMenu?.isChecked = SP.compactMenu
-        switchCompactMenu?.setOnCheckedChangeListener { _, isChecked ->
+        val switchCompactMenu = binding.switchCompactMenu
+        switchCompactMenu.isChecked = SP.compactMenu
+        switchCompactMenu.setOnCheckedChangeListener { _, isChecked ->
             SP.compactMenu = isChecked
             mainActivity.updateMenuSize()
             mainActivity.settingActive()
         }
 
-        val switchDisplaySeconds = _binding?.switchDisplaySeconds
-        switchDisplaySeconds?.isChecked = SP.displaySeconds
+        val switchDisplaySeconds = binding.switchDisplaySeconds
+        switchDisplaySeconds.isChecked = SP.displaySeconds
 
-        val switchSoftDecode = _binding?.switchSoftDecode
-        switchSoftDecode?.isChecked = SP.softDecode
-        switchSoftDecode?.setOnCheckedChangeListener { _, isChecked ->
+        val switchSoftDecode = binding.switchSoftDecode
+        switchSoftDecode.isChecked = SP.softDecode
+        switchSoftDecode.setOnCheckedChangeListener { _, isChecked ->
             SP.softDecode = isChecked
             mainActivity.switchSoftDecode()
             mainActivity.settingActive()
+        }
+
+        binding.uiAlphaItem.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        val current = SP.uiAlpha
+                        val next = max(0, current - 25)
+                        SP.uiAlpha = next
+                        viewModel.updateUIAlpha()
+                        return@setOnKeyListener true
+                    }
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        val current = SP.uiAlpha
+                        val next = min(255, current + 25)
+                        SP.uiAlpha = next
+                        viewModel.updateUIAlpha()
+                        return@setOnKeyListener true
+                    }
+                }
+            }
+            false
         }
 
         binding.remoteSettings.setOnClickListener {
@@ -166,11 +177,8 @@ class SettingFragment : Fragment() {
             requireActivity().finishAffinity()
         }
 
-        val txtTextSize =
-            application.px2PxFont(binding.versionName.textSize)
-
-        binding.content.layoutParams.width =
-            application.px2Px(binding.content.layoutParams.width)
+        // Layout scaling
+        binding.content.layoutParams.width = application.px2Px(binding.content.layoutParams.width)
         binding.content.setPadding(
             application.px2Px(binding.content.paddingLeft),
             application.px2Px(binding.content.paddingTop),
@@ -178,104 +186,13 @@ class SettingFragment : Fragment() {
             application.px2Px(binding.content.paddingBottom)
         )
 
-        binding.name.textSize = application.px2PxFont(binding.name.textSize)
-        binding.version.textSize = txtTextSize
-        val layoutParamsVersion = binding.version.layoutParams as ViewGroup.MarginLayoutParams
-        layoutParamsVersion.topMargin = application.px2Px(binding.version.marginTop)
-        layoutParamsVersion.bottomMargin = application.px2Px(binding.version.marginBottom)
-        binding.version.layoutParams = layoutParamsVersion
+        val titleSize = application.px2PxFont(binding.name.textSize)
+        val versionNameSize = application.px2PxFont(binding.versionName.textSize)
 
-        val btnWidth =
-            application.px2Px(binding.confirmConfig.layoutParams.width)
+        binding.name.textSize = titleSize
+        binding.versionName.textSize = versionNameSize
 
-        val btnLayoutParams =
-            binding.confirmConfig.layoutParams as ViewGroup.MarginLayoutParams
-        btnLayoutParams.marginEnd = application.px2Px(binding.confirmConfig.marginEnd)
-
-        binding.versionName.textSize = txtTextSize
-
-        for (i in listOf(
-            binding.remoteSettings,
-            binding.confirmConfig,
-            binding.clear,
-            binding.checkVersion,
-            binding.exit,
-            binding.appreciate,
-        )) {
-            i.layoutParams.width = btnWidth
-            i.textSize = txtTextSize
-            i.layoutParams = btnLayoutParams
-            i.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) {
-                    i.background = ColorDrawable(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.focus
-                        )
-                    )
-                    i.setTextColor(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.white
-                        )
-                    )
-                } else {
-                    i.background = ColorDrawable(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.description_blur
-                        )
-                    )
-                    i.setTextColor(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.blur
-                        )
-                    )
-                }
-            }
-        }
-
-        val textSizeSwitch = application.px2PxFont(binding.switchChannelReversal.textSize)
-
-        val layoutParamsSwitch =
-            binding.switchChannelReversal.layoutParams as ViewGroup.MarginLayoutParams
-        layoutParamsSwitch.topMargin =
-            application.px2Px(binding.switchChannelReversal.marginTop)
-
-        for (i in listOf(
-            binding.switchChannelReversal,
-            binding.switchChannelNum,
-            binding.switchTime,
-            binding.switchBootStartup,
-            binding.switchRepeatInfo,
-            binding.switchConfigAutoLoad,
-            binding.switchDefaultLike,
-            binding.switchShowAllChannels,
-            binding.switchCompactMenu,
-            binding.switchDisplaySeconds,
-            binding.switchSoftDecode,
-        )) {
-            i.textSize = textSizeSwitch
-            i.layoutParams = layoutParamsSwitch
-            i.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) {
-                    i.setTextColor(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.focus
-                        )
-                    )
-                } else {
-                    i.setTextColor(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.title_blur
-                        )
-                    )
-                }
-            }
-        }
+        binding.uaDisplay.text = SP.ua ?: "Linux-6"
 
         updateManager = UpdateManager(context, context.appVersionCode)
 
@@ -286,11 +203,15 @@ class SettingFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val context = requireActivity()
-        val mainActivity = (activity as MainActivity)
         val application = context.applicationContext as MyTVApplication
         val imageHelper = application.imageHelper
 
         viewModel = ViewModelProvider(context)[MainViewModel::class.java]
+
+        viewModel.uiAlpha.observe(viewLifecycleOwner) { alpha ->
+            binding.content.background?.alpha = alpha
+            binding.uiAlphaValue.text = "${(alpha * 100 / 255)}%"
+        }
 
         binding.switchDisplaySeconds.setOnCheckedChangeListener { _, isChecked ->
             viewModel.setDisplaySeconds(isChecked)
@@ -309,6 +230,8 @@ class SettingFragment : Fragment() {
             SP.repeatInfo = SP.DEFAULT_REPEAT_INFO
             SP.configAutoLoad = SP.DEFAULT_CONFIG_AUTO_LOAD
             SP.proxy = SP.DEFAULT_PROXY
+            SP.uiAlpha = SP.DEFAULT_UI_ALPHA
+            viewModel.updateUIAlpha()
 
             imageHelper.clearImage()
 
@@ -327,10 +250,6 @@ class SettingFragment : Fragment() {
 
             SP.deleteLike()
             Log.i(TAG, "clear like")
-
-//            SP.positionGroup = SP.DEFAULT_POSITION_GROUP
-//            viewModel.groupModel.setPosition(SP.DEFAULT_POSITION_GROUP)
-//            viewModel.groupModel.setPositionPlaying(SP.DEFAULT_POSITION_GROUP)
 
             SP.positionGroup = viewModel.groupModel.defaultPosition()
             viewModel.groupModel.initPosition()
@@ -360,7 +279,7 @@ class SettingFragment : Fragment() {
             SP.showAllChannels = isChecked
             viewModel.groupModel.setChange()
 
-            mainActivity.settingActive()
+            (activity as MainActivity).settingActive()
         }
 
         binding.remoteSettings.requestFocus()
@@ -497,4 +416,3 @@ class SettingFragment : Fragment() {
         const val PERMISSION_READ_EXTERNAL_STORAGE_REQUEST_CODE = 2
     }
 }
-

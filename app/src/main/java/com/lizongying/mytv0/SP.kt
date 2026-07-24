@@ -60,20 +60,26 @@ object SP {
 
     private const val KEY_SOFT_DECODE = "soft_decode"
 
-    const val DEFAULT_CHANNEL_REVERSAL = false
+    private const val KEY_UA = "ua"
+
+    private const val KEY_UI_ALPHA = "ui_alpha"
+
+    const val DEFAULT_CHANNEL_REVERSAL = true
     const val DEFAULT_CHANNEL_NUM = false
     const val DEFAULT_TIME = true
     const val DEFAULT_BOOT_STARTUP = false
     const val DEFAULT_CONFIG_URL = ""
     const val DEFAULT_PROXY = ""
     const val DEFAULT_EPG =
-        "https://live.fanmingming.cn/e.xml,https://raw.githubusercontent.com/fanmingming/live/main/e.xml"
+        "https://gh-proxy.org/https://raw.githubusercontent.com/mytv-android/myEPG/refs/heads/master/output/epg.xml"
     const val DEFAULT_CHANNEL = 0
     const val DEFAULT_SHOW_ALL_CHANNELS = false
     const val DEFAULT_COMPACT_MENU = true
     const val DEFAULT_DISPLAY_SECONDS = true
     const val DEFAULT_LOG_TIMES = 10
     const val DEFAULT_SOFT_DECODE = false
+    const val DEFAULT_UI_ALPHA = 255
+    val DEFAULT_UA: String = "Linux-6" + (1..6).map { "abcdefghijklmnopqrstuvwxyz0123456789".random() }.joinToString("")
 
     // 0 favorite; 1 all
     const val DEFAULT_POSITION_GROUP = 1
@@ -97,13 +103,21 @@ object SP {
             .use {
                 val str = it.readText()
                 if (str.isNotEmpty()) {
-                    DEFAULT_SOURCES = gson.toJson(
-                        Gua().decode(str).trim().split("\n").map { i ->
-                            Source(
-                                uri = i
-                            )
-                        }, typeSourceList
-                    ) ?: ""
+                    try {
+                        DEFAULT_SOURCES = gson.toJson(
+                            Gua().decode(str).trim().split("\n").map { i ->
+                                Source(
+                                    uri = i
+                                )
+                            }, typeSourceList
+                        ) ?: ""
+                    } catch (e: Exception) {
+                        Log.e(TAG, "decode sources error", e)
+                        DEFAULT_SOURCES = ""
+                    }
+                } else {
+                    // Clear saved sources if sources.txt is empty
+                    sp.edit().remove(KEY_SOURCES).apply()
                 }
             }
 
@@ -216,4 +230,12 @@ object SP {
     var sources: String?
         get() = sp.getString(KEY_SOURCES, DEFAULT_SOURCES)
         set(value) = sp.edit().putString(KEY_SOURCES, value).apply()
+
+    var ua: String?
+        get() = sp.getString(KEY_UA, DEFAULT_UA)
+        set(value) = sp.edit().putString(KEY_UA, value).apply()
+
+    var uiAlpha: Int
+        get() = sp.getInt(KEY_UI_ALPHA, DEFAULT_UI_ALPHA)
+        set(value) = sp.edit().putInt(KEY_UI_ALPHA, value).apply()
 }

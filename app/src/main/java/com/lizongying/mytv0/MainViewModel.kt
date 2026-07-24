@@ -31,8 +31,11 @@ import com.lizongying.mytv0.requests.HttpClient
 import com.lizongying.mytv0.showToast
 import io.github.lizongying.Gua
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.Semaphore
 import java.io.File
 import java.io.InputStream
 
@@ -57,6 +60,38 @@ class MainViewModel : ViewModel() {
     private val _channelsOk = MutableLiveData<Boolean>()
     val channelsOk: LiveData<Boolean>
         get() = _channelsOk
+
+    private val _currentTVModel = MutableLiveData<TVModel?>()
+    val currentTVModel: LiveData<TVModel?>
+        get() = _currentTVModel
+
+    fun setCurrentTVModel(tvModel: TVModel?) {
+        _currentTVModel.value = tvModel
+    }
+
+    private val _uiAlpha = MutableLiveData<Int>(SP.uiAlpha)
+    val uiAlpha: LiveData<Int>
+        get() = _uiAlpha
+
+    fun updateUIAlpha() {
+        _uiAlpha.value = SP.uiAlpha
+    }
+
+    private val _videoFormatInfo = MutableLiveData<String>()
+    val videoFormatInfo: LiveData<String>
+        get() = _videoFormatInfo
+
+    fun setVideoFormatInfo(info: String) {
+        _videoFormatInfo.value = info
+    }
+
+    private val _importProgress = MutableLiveData<Int?>()
+    val importProgress: LiveData<Int?>
+        get() = _importProgress
+
+    fun setImportProgress(progress: Int?) {
+        _importProgress.value = progress
+    }
 
     fun setDisplaySeconds(displaySeconds: Boolean) {
         timeFormat = if (displaySeconds) "HH:mm:ss" else "HH:mm"
@@ -158,25 +193,57 @@ class MainViewModel : ViewModel() {
             return
         }
 
-        for (tvModel in listModel) {
+        // 使用 Semaphore 限制并发数为 15
+        val semaphore = Semaphore(15)
+
+        // 并行预加载所有频道的 logo
+        val jobs = listModel.map { tvModel ->
             var name = tvModel.tv.name
             if (name.isEmpty()) {
                 name = tvModel.tv.title
             }
             val url = tvModel.tv.logo
-            var urls =
-                listOf(
-                    "https://live.fanmingming.cn/tv/$name.png"
-                ) + getUrls("https://raw.githubusercontent.com/fanmingming/live/main/tv/$name.png")
-            if (url.isNotEmpty()) {
-                urls = (getUrls(url) + urls).distinct()
-            }
 
-            imageHelper.preloadImage(
-                name,
-                urls,
-            )
+            // 构建 URL 列表：优先 tvg-logo，其次 gitee 备用
+            val urls = mutableListOf<String>()
+            if (url.isNotEmpty()) {
+                urls.addAll(getUrls(url))
+            }
+            val logoFileName = if (url.isNotEmpty()) {
+                url.substringAfterLast("/")
+            } else {
+                "${name.uppercase()}.png"
+            }
+            val fallbackUrl = "https://gitee.com/mytv-android/myTVlogo/raw/main/img/$logoFileName"
+            urls.add(fallbackUrl)
+
+            Log.d(TAG, "preloadLogo: $name, urls=${urls.size}, first=${urls.first()}, last=fallback")
+
+            // 每个频道独立协程下载，使用 Semaphore 限制并发
+            kotlinx.coroutines.GlobalScope.async(Dispatchers.IO) {
+                semaphore.acquire()
+                try {
+                    // 检查缓存是否已存在
+                    val cacheKey = "gitee_$logoFileName"
+                    if (imageHelper.isCached(cacheKey)) {
+                        Log.d(TAG, "preloadLogo cached: $name")
+                        return@async
+                    }
+                    Log.d(TAG, "preloadLogo downloading: $name")
+                    imageHelper.preloadImage(
+                        name,
+                        urls,
+                        url,
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "preloadLogo failed: $name", e)
+                } finally {
+                    semaphore.release()
+                }
+            }
         }
+        jobs.awaitAll()
+        Log.d(TAG, "preloadLogo all done")
     }
 
     suspend fun readEPG(input: InputStream): Boolean = withContext(Dispatchers.IO) {
@@ -272,40 +339,52 @@ class MainViewModel : ViewModel() {
 
         var err = 0
         var shouldBreak = false
-        for ((a, b) in urls) {
+        for ((index, pair) in urls.withIndex()) {
+            val a = pair.first
+            val b = pair.second
             Log.i(TAG, "request $a")
-            withContext(Dispatchers.IO) {
-                try {
+            setImportProgress(index * 50 / urls.size)
+            try {
+                // 使用 Dispatchers.IO 执行网络请求，避免阻塞主线程
+                val str = withContext(Dispatchers.IO) {
                     val request = okhttp3.Request.Builder().url(a).build()
                     val response = HttpClient.okHttpClient.newCall(request).execute()
 
                     if (response.isSuccessful) {
-                        val str = response.bodyAlias()?.string() ?: ""
-                        withContext(Dispatchers.Main) {
-                            tryStr2Channels(str, null, b, id)
-                        }
-                        err = 0
-                        shouldBreak = true
+                        response.bodyAlias()?.string() ?: ""
                     } else {
                         Log.e(TAG, "Request status ${response.codeAlias()}")
                         err = R.string.channel_status_error
+                        ""
                     }
-                } catch (e: JsonSyntaxException) {
-                    e.printStackTrace()
-                    Log.e(TAG, "JSON Parse Error", e)
-                    err = R.string.channel_format_error
-                    shouldBreak = true
-                } catch (e: NullPointerException) {
-                    e.printStackTrace()
-                    Log.e(TAG, "Null Pointer Error", e)
-                    err = R.string.channel_read_error
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    Log.e(TAG, "Request error $e")
-                    err = R.string.channel_request_error
                 }
+
+                if (err == 0 && str.isNotEmpty()) {
+                    tryStr2Channels(str, null, b, id)
+                    err = 0
+                    shouldBreak = true
+                }
+            } catch (e: JsonSyntaxException) {
+                e.printStackTrace()
+                Log.e(TAG, "JSON Parse Error", e)
+                err = R.string.channel_format_error
+                shouldBreak = true
+            } catch (e: NullPointerException) {
+                e.printStackTrace()
+                Log.e(TAG, "Null Pointer Error", e)
+                err = R.string.channel_read_error
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e(TAG, "Request error $e")
+                err = R.string.channel_request_error
             }
             if (shouldBreak) break
+        }
+
+        if (!shouldBreak) {
+            setImportProgress(null)
+        } else {
+            setImportProgress(100)
         }
 
         if (err != 0) {
@@ -367,6 +446,7 @@ class MainViewModel : ViewModel() {
             } else {
                 R.string.channel_import_error.showToast()
                 Log.w(TAG, "channel import error")
+                setImportProgress(null)
             }
         } catch (e: Exception) {
             Log.e(TAG, "tryStr2Channels", e)

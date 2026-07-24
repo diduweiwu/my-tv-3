@@ -85,6 +85,12 @@ object HttpClient {
             .hostnameVerifier { _, _ -> true }
             .connectionSpecs(listOf(ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT))
             .dns(DnsCache())
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .header("User-Agent", SP.ua ?: "Linux-6abcdefgh")
+                    .build()
+                chain.proceed(request)
+            }
             .apply { enableTls12OnPreLollipop() }
     }
 

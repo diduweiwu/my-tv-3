@@ -28,5 +28,14 @@
             android:textColor="@color/white"
             tools:text="Message"
             android:textSize="20sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/countdown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/description_blur"
+            tools:text="5秒后自动换台"
+            android:textSize="14sp" />
     </LinearLayout>
 </FrameLayout>

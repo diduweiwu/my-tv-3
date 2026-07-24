@@ -97,6 +97,6 @@ class TimeFragment : Fragment() {
     }
 
     companion object {
-        private const val TAG = "TimeFragment"
+        const val TAG = "TimeFragment"
     }
 }

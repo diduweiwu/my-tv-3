@@ -13,6 +13,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.lizongying.mytv0.Utils.getUrls
 import com.lizongying.mytv0.data.Global.gson
@@ -120,11 +121,12 @@ class UpdateManager(
 
         val intentFilter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.registerReceiver(downloadReceiver, intentFilter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            context.registerReceiver(downloadReceiver, intentFilter)
-        }
+        ContextCompat.registerReceiver(
+            context,
+            downloadReceiver!!,
+            intentFilter,
+            ContextCompat.RECEIVER_EXPORTED
+        )
 
         getDownloadProgress(context, downloadReference) { progress ->
             println("Download progress: $progress%")

@@ -1,21 +1,19 @@
 package com.lizongying.mytv0
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.core.view.marginBottom
 import androidx.core.view.marginStart
 import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.lizongying.mytv0.databinding.InfoBinding
 import com.lizongying.mytv0.models.TVModel
+import MainViewModel
 
 
 class InfoFragment : Fragment() {
@@ -24,6 +22,8 @@ class InfoFragment : Fragment() {
 
     private val handler = Handler()
     private val delay: Long = 5000
+
+    private lateinit var viewModel: MainViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -40,12 +40,13 @@ class InfoFragment : Fragment() {
         layoutParams.bottomMargin = application.px2Px(binding.info.marginBottom)
         binding.info.layoutParams = layoutParams
 
-        binding.logo.layoutParams.width = application.px2Px(binding.logo.layoutParams.width)
-        var padding = application.px2Px(binding.logo.paddingTop)
-        binding.logo.setPadding(padding, padding, padding, padding)
+        // Logo 宽度由 wrap_content + maxWidth 控制，高度与弹窗一致
+        // 只设置水平内边距，垂直方向无内边距以充分利用高度
+        val paddingH = application.px2Px(10)
+        binding.logo.setPadding(paddingH, 0, paddingH, 0)
         binding.main.layoutParams.width = application.px2Px(binding.main.layoutParams.width)
-        padding = application.px2Px(binding.main.paddingTop)
-        binding.main.setPadding(padding, padding, padding, padding)
+        val paddingMain = application.px2Px(binding.main.paddingTop)
+        binding.main.setPadding(paddingMain, paddingMain, paddingMain, paddingMain)
 
         val layoutParamsMain = binding.main.layoutParams as ViewGroup.MarginLayoutParams
         layoutParamsMain.marginStart = application.px2Px(binding.main.marginStart)
@@ -67,6 +68,18 @@ class InfoFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val context = requireActivity()
+        viewModel = ViewModelProvider(context)[MainViewModel::class.java]
+
+        viewModel.uiAlpha.observe(viewLifecycleOwner) { alpha ->
+            binding.logo.background?.alpha = alpha
+            binding.main.background?.alpha = alpha
+        }
+
+        viewModel.videoFormatInfo.observe(viewLifecycleOwner) { info ->
+            binding.techInfo.text = info
+        }
+
         (activity as MainActivity).ready(TAG)
     }
 
@@ -83,34 +96,18 @@ class InfoFragment : Fragment() {
         val application = context.applicationContext as MyTVApplication
         val imageHelper = application.imageHelper
 
+        Log.i(TAG, "tv.logo='${tv.logo}', tv.name='${tv.name}', tv.title='${tv.title}'")
+
+        val channelNum = if (tv.number == -1) tv.id.plus(1) else tv.number
+        binding.channelNum.text = "%03d".format(channelNum)
         binding.title.text = tv.title
 
         when (tv.title) {
             else -> {
-                val width = 300
-                val height = 180
-                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                val canvas = Canvas(bitmap)
-
-                val channelNum = if (tv.number == -1) tv.id.plus(1) else tv.number
-                var size = 150f
-                if (channelNum > 99) {
-                    size = 100f
-                }
-                if (channelNum > 999) {
-                    size = 75f
-                }
-                val paint = Paint().apply {
-                    color = ContextCompat.getColor(context, R.color.title_blur)
-                    textSize = size
-                    textAlign = Paint.Align.CENTER
-                }
-                val x = width / 2f
-                val y = height / 2f - (paint.descent() + paint.ascent()) / 2
-                canvas.drawText(channelNum.toString(), x, y, paint)
-
                 val name = if (tv.name.isNotEmpty()) { tv.name } else { tv.title }
-                imageHelper.loadImage(name, binding.logo, bitmap, tv.logo)
+
+                // 只从缓存加载 logo，缓存不存在时显示空白占位图
+                imageHelper.loadImage(name, binding.logo, tv.logo)
             }
         }
 
@@ -146,6 +143,6 @@ class InfoFragment : Fragment() {
     }
 
     companion object {
-        private const val TAG = "InfoFragment"
+        const val TAG = "InfoFragment"
     }
 }

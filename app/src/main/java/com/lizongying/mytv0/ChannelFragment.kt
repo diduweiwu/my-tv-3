@@ -56,6 +56,10 @@ class ChannelFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val context = requireActivity()
         viewModel = ViewModelProvider(context)[MainViewModel::class.java]
+
+        viewModel.uiAlpha.observe(viewLifecycleOwner) { alpha ->
+            binding.channel.background?.alpha = alpha
+        }
     }
 
     fun show(tvModel: TVModel) {
@@ -99,6 +103,10 @@ class ChannelFragment : Fragment() {
 
     fun playNow() {
         handler.postDelayed(playRunnable, 0)
+    }
+
+    fun isTyping(): Boolean {
+        return channelCount > 0
     }
 
     override fun onResume() {
@@ -148,7 +156,7 @@ class ChannelFragment : Fragment() {
     }
 
     companion object {
-        private const val TAG = "ChannelFragment"
+        const val TAG = "ChannelFragment"
         private const val BLANK = ""
     }
 }
