@@ -150,9 +150,13 @@ class SimpleServer(private val context: Context, private val viewModel: MainView
         R.string.start_config_channel.showToast()
         val response = ""
         try {
-            readBody(session)?.let {
-                handler.post {
-                    viewModel.tryStr2Channels(it, null, "")
+            readBody(session)?.let { body ->
+                runBlocking(Dispatchers.Main) {
+                    try {
+                        viewModel.tryStr2Channels(body, null, "")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "handleImportText", e)
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -174,19 +178,20 @@ class SimpleServer(private val context: Context, private val viewModel: MainView
                 val req = gson.fromJson(it, ReqSourceAdd::class.java)
                 val uri = Uri.parse(req.uri)
                 Log.i(TAG, "handleImportUri: uri=$uri, id=${req.id}")
-                val latch = java.util.concurrent.CountDownLatch(1)
+                handler.post {
+                    val source = Source(id = req.id, uri = req.uri)
+                    viewModel.sources.addSource(source)
+                }
                 handler.post {
                     GlobalScope.launch {
                         try {
                             viewModel.importFromUri(uri, req.id)
                             Log.i(TAG, "handleImportUri: import completed")
-                        } finally {
-                            latch.countDown()
+                        } catch (e: Exception) {
+                            Log.e(TAG, "handleImportUri", e)
                         }
                     }
                 }
-                latch.await()
-                Log.i(TAG, "handleImportUri: latch released")
             }
         } catch (e: Exception) {
             Log.e(TAG, "handleImportUri", e)

@@ -11,8 +11,10 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.lizongying.mytv0.databinding.SourcesBinding
+import kotlinx.coroutines.launch
 
 
 class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
@@ -101,7 +103,9 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
         viewModel.sources.getSource(position)?.let {
             val uri = Uri.parse(it.uri)
             handler.post {
-                viewModel.importFromUri(uri)
+                lifecycleScope.launch {
+                    viewModel.importFromUri(uri)
+                }
             }
         }
 

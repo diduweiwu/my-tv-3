@@ -116,8 +116,7 @@ object SP {
                         DEFAULT_SOURCES = ""
                     }
                 } else {
-                    // Clear saved sources if sources.txt is empty
-                    sp.edit().remove(KEY_SOURCES).apply()
+                    Log.w(TAG, "sources.txt is empty, keeping existing saved sources")
                 }
             }
 

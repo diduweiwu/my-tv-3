@@ -17,11 +17,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.lizongying.mytv0.ModalFragment.Companion.KEY_URL
 import com.lizongying.mytv0.SimpleServer.Companion.PORT
 import com.lizongying.mytv0.databinding.SettingBinding
 import kotlin.math.max
 import kotlin.math.min
+import kotlinx.coroutines.launch
 
 
 class SettingFragment : Fragment() {
@@ -299,7 +301,9 @@ class SettingFragment : Fragment() {
             if (uri.scheme == "file") {
                 requestReadPermissions()
             } else {
-                viewModel.importFromUri(uri)
+                lifecycleScope.launch {
+                    viewModel.importFromUri(uri)
+                }
             }
         } else {
             R.string.invalid_config_address.showToast()
@@ -371,7 +375,9 @@ class SettingFragment : Fragment() {
                 PERMISSIONS_REQUEST_CODE
             )
         } else {
-            viewModel.importFromUri(uri)
+            lifecycleScope.launch {
+                viewModel.importFromUri(uri)
+            }
         }
     }
 
@@ -383,7 +389,9 @@ class SettingFragment : Fragment() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_READ_EXTERNAL_STORAGE_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                viewModel.importFromUri(uri)
+                lifecycleScope.launch {
+                    viewModel.importFromUri(uri)
+                }
             } else {
                 R.string.authorization_failed.showToast()
             }

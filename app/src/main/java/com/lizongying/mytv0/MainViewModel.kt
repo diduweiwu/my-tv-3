@@ -404,7 +404,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun importFromUri(uri: Uri, id: String = "") {
+    suspend fun importFromUri(uri: Uri, id: String = "") {
         if (uri.scheme == "file") {
             val file = uri.toFile()
             Log.i(TAG, "file $file")
@@ -417,9 +417,7 @@ class MainViewModel : ViewModel() {
 
             tryStr2Channels(str, file, uri.toString(), id)
         } else {
-            viewModelScope.launch {
-                importFromUrl(uri.toString(), id)
-            }
+            importFromUrl(uri.toString(), id)
         }
     }
 
