@@ -33,7 +33,6 @@ class SourcesAdapter(
         binding.num.layoutParams.height = application.px2Px(binding.num.layoutParams.height)
         binding.num.textSize = application.px2PxFont(binding.num.textSize)
 
-        binding.title.layoutParams.width = application.px2Px(binding.title.layoutParams.width)
         binding.title.layoutParams.height = application.px2Px(binding.title.layoutParams.height)
         binding.title.textSize = application.px2PxFont(binding.title.textSize)
 

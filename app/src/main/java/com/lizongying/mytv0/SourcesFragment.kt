@@ -31,6 +31,10 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
         dialog?.window?.apply {
             addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
             decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            // 设置弹窗宽度为屏幕的90%
+            val displayMetrics = resources.displayMetrics
+            val width = (displayMetrics.widthPixels * 0.9).toInt()
+            setLayout(width, WindowManager.LayoutParams.MATCH_PARENT)
         }
     }
 
@@ -49,7 +53,6 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
         viewModel = ViewModelProvider(requireActivity())[MainViewModel::class.java]
 
         val context = requireActivity()
-        val application = context.applicationContext as MyTVApplication
 
         val sourcesAdapter = SourcesAdapter(
             context,
@@ -59,8 +62,6 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
         binding.list.adapter = sourcesAdapter
         binding.list.layoutManager =
             LinearLayoutManager(context)
-        val listWidth = application.px2Px(binding.list.layoutParams.width)
-        binding.list.layoutParams.width = listWidth
         sourcesAdapter.setItemListener(this)
         sourcesAdapter.toPosition(if (viewModel.sources.checkedValue > -1) viewModel.sources.checkedValue else 0)
 
