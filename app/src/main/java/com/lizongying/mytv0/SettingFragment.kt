@@ -358,7 +358,8 @@ class SettingFragment : Fragment() {
                 PERMISSIONS_REQUEST_CODE
             )
         } else {
-            updateManager.checkAndUpdate()
+            // updateManager.checkAndUpdate()  // 已禁用
+            Log.i(TAG, "版本检查已禁用")
         }
     }
 
@@ -405,7 +406,8 @@ class SettingFragment : Fragment() {
                 }
             }
             if (allPermissionsGranted) {
-                updateManager.checkAndUpdate()
+                // updateManager.checkAndUpdate()  // 已禁用
+                Log.i(TAG, "版本检查已禁用")
             } else {
                 Log.w(TAG, "ask permissions failed")
                 R.string.authorization_failed.showToast()
