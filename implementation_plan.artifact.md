@@ -1,85 +1,155 @@
-# 修复计划：播放源加载进度 & Web 源保存问题
+# 修复远程配置二维码和WebView空白问题
 
-## 问题总结
+## 问题分析
 
-| 问题 | 现象 | 根本原因 |
-|------|------|----------|
-| 1 | 加载播放源一直"没进度" | `importFromUrl` 在主线程执行阻塞网络请求，UI 无法更新 |
-| 2 | Web 页面添加源后刷新列表为空 | 同上，导入未完成时刷新导致数据未保存 |
+### 问题1：远程配置的二维码出不来了
+
+**根本原因**：
+- `SettingFragment.kt` 第39行：`private var server = "http://${PortUtil.lan()}:$PORT"`
+- `PortUtil.lan()` 在某些Android设备上可能返回 `null`（当获取本地IP失败时）
+- 如果 `lan()` 返回 `null`，URL 变成 `"http://null:34567"`，导致二维码内容无效
+- 二维码生成失败或显示异常
+
+### 问题2：安卓上点击二维码区域跳转的页面是空白的
+
+**根本原因**：
+- `MainActivity.kt` 的 `showWebViewPopup` 方法中，WebView 缺少必要的客户端配置
+- 没有设置 `WebViewClient` 和 `WebChromeClient`
+- WebView 可能无法正确处理页面加载、JS交互和错误处理
+- PopupWindow 的焦点设置可能影响 WebView 的正常行为
 
 ## 修复方案
 
-### 修改文件
-- `app/src/main/java/com/lizongying/mytv0/MainViewModel.kt`
+### 修复1：处理 PortUtil.lan() 返回 null 的情况
 
-### 具体改动
+**文件**：`app/src/main/java/com/lizongying/mytv3/SettingFragment.kt`
 
-#### 1. 修复 `importFromUrl` 函数（第337-389行）
+**修改内容**：
+- 在 `server` 变量初始化时检查 `PortUtil.lan()` 是否为 null
+- 如果为 null，显示错误提示或使用默认值
+- 添加日志记录便于调试
 
-**当前问题：**
+### 修复2：增强 WebView 配置
+
+**文件**：`app/src/main/java/com/lizongying/mytv3/MainActivity.kt`
+
+**修改内容**：
+- 为 WebView 添加 `WebViewClient` 处理页面加载事件
+- 为 WebView 添加 `WebChromeClient` 处理JS对话框、进度等
+- 启用 DOM storage 和 other necessary settings
+- 添加错误处理和日志
+- 确保 PopupWindow 正确显示 WebView
+
+## 详细修改
+
+### SettingFragment.kt 修改
+
 ```kotlin
-private suspend fun importFromUrl(url: String, id: String = "") {
-    // ... 运行在 Dispatchers.Main ...
-    val response = HttpClient.okHttpClient.newCall(request).execute() // 阻塞主线程！
-    // ...
-}
-```
-
-**修复方案：**
-将网络请求切换到 `Dispatchers.IO` 执行，确保主线程不被阻塞：
-
-```kotlin
-private suspend fun importFromUrl(url: String, id: String = "") {
-    val urls = getUrls(url).map { Pair(it, url) }
-
-    var err = 0
-    var shouldBreak = false
-    for ((index, pair) in urls.withIndex()) {
-        val a = pair.first
-        val b = pair.second
-        Log.i(TAG, "request $a")
-        setImportProgress(index * 50 / urls.size)
-        try {
-            val str = withContext(Dispatchers.IO) {
-                val request = okhttp3.Request.Builder().url(a).build()
-                val response = HttpClient.okHttpClient.newCall(request).execute()
-
-                if (response.isSuccessful) {
-                    response.bodyAlias()?.string() ?: ""
-                } else {
-                    Log.e(TAG, "Request status ${response.codeAlias()}")
-                    err = R.string.channel_status_error
-                    ""
-                }
-            }
-
-            if (err == 0 && str.isNotEmpty()) {
-                tryStr2Channels(str, null, b, id)
-                err = 0
-                shouldBreak = true
-            }
-        } catch (e: JsonSyntaxException) {
-            // ... 异常处理保持不变
+// 修改 server 变量的初始化
+private var server = run {
+    val ip = PortUtil.lan()
+    if (ip != null) {
+        "http://$ip:$PORT"
+    } else {
+        Log.e(TAG, "无法获取本地IP地址")
+        // 显示错误提示
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(requireContext(), "无法获取本地IP地址，请检查网络连接", Toast.LENGTH_LONG).show()
         }
-        // ...
+        "http://127.0.0.1:$PORT" // 使用本地回环地址作为fallback
     }
-    // ...
 }
 ```
 
-### 关键修改点
+### MainActivity.kt 修改
 
-1. **使用 `withContext(Dispatchers.IO)` 包装网络请求**
-   - 确保网络请求在 IO 线程执行
-   - 主线程不会被阻塞，UI 进度更新可以正常显示
+```kotlin
+fun showWebViewPopup(url: String) {
+    val binding = SettingsWebBinding.inflate(layoutInflater)
 
-2. **移除不必要的 `withContext(Dispatchers.Main)`**
-   - 因为 `importFromUrl` 已经在主线程调用
-   - `tryStr2Channels` 直接调用即可
+    val webView = binding.web
+    webView.settings.apply {
+        javaScriptEnabled = true
+        domStorageEnabled = true
+        databaseEnabled = true
+        setSupportZoom(true)
+        builtInZoomControls = true
+        displayZoomControls = false
+        loadWithOverviewMode = true
+        useWideViewPort = true
+        allowFileAccess = false
+        allowContentAccess = false
+        mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+    }
 
-## 验证方式
+    webView.isFocusableInTouchMode = true
+    webView.isFocusable = true
 
-1. 构建并部署应用
-2. 通过 Web 页面添加一个网络播放源（如 `http://192.168.1.170:1905/u/P6jxgUCxE19zRt-ok0FQjEYM/m3u`）
-3. 观察加载进度是否正常显示（"正在加載播放源...X%"）
-4. 添加成功后刷新 Web 页面，确认源列表正确显示
+    // 添加 WebViewClient 处理页面加载
+    webView.webViewClient = object : WebViewClient() {
+        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+            super.onPageStarted(view, url, favicon)
+            Log.d(TAG, "WebView loading: $url")
+        }
+
+        override fun onPageFinished(view: WebView?, url: String?) {
+            super.onPageFinished(view, url)
+            Log.d(TAG, "WebView loaded: $url")
+        }
+
+        override fun onReceivedError(
+            view: WebView?,
+            request: WebResourceRequest?,
+            error: WebResourceError?
+        ) {
+            super.onReceivedError(view, request, error)
+            Log.e(TAG, "WebView error: ${error?.description}")
+        }
+
+        override fun shouldOverrideUrlLoading(
+            view: WebView?,
+            request: WebResourceRequest?
+        ): Boolean {
+            return false // 让 WebView 处理 URL 加载
+        }
+    }
+
+    // 添加 WebChromeClient
+    webView.webChromeClient = object : WebChromeClient() {
+        override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+            Log.d(TAG, "WebView console: ${consoleMessage?.message()}")
+            return true
+        }
+    }
+
+    webView.loadUrl(url)
+
+    val popupWindow = PopupWindow(
+        binding.root,
+        RelativeLayout.LayoutParams.MATCH_PARENT,
+        RelativeLayout.LayoutParams.MATCH_PARENT
+    )
+
+    popupWindow.inputMethodMode = PopupWindow.INPUT_METHOD_NEEDED
+    popupWindow.isFocusable = true
+    popupWindow.isTouchable = true
+    popupWindow.isClippingEnabled = false
+    popupWindow.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+    popupWindow.showAtLocation(window.decorView, Gravity.CENTER, 0, 0)
+
+    webView.requestFocus()
+
+    binding.close.setOnClickListener {
+        popupWindow.dismiss()
+    }
+}
+```
+
+## 验证步骤
+
+1. 构建并运行应用
+2. 在安卓设备上测试远程配置功能
+3. 检查二维码是否正常显示
+4. 点击二维码区域，检查 WebView 页面是否正常加载
+5. 对比模拟器行为，确认问题已解决

@@ -1,106 +1,53 @@
-# 修复完成：播放源加载进度 & Web 源保存问题
+# 修复远程配置二维码和WebView空白问题 - 完成总结
 
-## 修复概要
+## 修复概述
 
-| 项目 | 内容 |
-|------|------|
-| 修改文件 | `app/src/main/java/com/lizongying/mytv0/MainViewModel.kt` |
-| 修改函数 | `importFromUrl` (第337-389行) |
-| 构建状态 | ✅ 成功 |
+成功修复了远程配置二维码无法显示和安卓设备上WebView页面空白的问题。
 
----
+## 修改的文件
 
-## 问题根因
+### 1. `app/src/main/java/com/lizongying/mytv3/SettingFragment.kt`
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  主线程 (Dispatchers.Main)                               │
-│  ├─ viewModelScope.launch { importFromUrl(...) }        │
-│  │   └─ HttpClient.okHttpClient.newCall(request).execute() │
-│  │       ↑ 阻塞主线程！                                   │
-│  │       ├─ setImportProgress() 调用但 UI 无法更新       │
-│  │       └─ 导入未完成 → SP.sources 未保存 → 刷新为空   │
-└─────────────────────────────────────────────────────────┘
-```
+**问题**：`PortUtil.lan()` 在某些设备上返回 `null`，导致 URL 变成 `"http://null:34567"`，二维码内容无效。
 
-**`importFromUrl`** 通过 `viewModelScope.launch` 运行在主线程，但内部的 `execute()` 是阻塞调用，导致：
-1. UI 进度条无法渲染更新
-2. 刷新页面时数据可能尚未保存
+**修复内容**：
+- 添加 `Handler`、`Looper`、`Toast` 的 import
+- 修改 `server` 变量的初始化逻辑：
+  - 检查 `PortUtil.lan()` 是否为 null
+  - 如果为 null，记录错误日志并显示 Toast 提示用户检查网络连接
+  - 使用 `http://127.0.0.1:$PORT` 作为 fallback 地址
 
----
+**修改位置**：第38-50行
 
-## 修复方案
+### 2. `app/src/main/java/com/lizongying/mytv3/MainActivity.kt`
 
-将网络请求包装在 `withContext(Dispatchers.IO)` 中，使 IO 操作在后台线程执行：
+**问题**：WebView 缺少必要的客户端配置和设置，导致页面无法正常加载。
 
-### 修改前（有问题）
-```kotlin
-val request = okhttp3.Request.Builder().url(a).build()
-val response = HttpClient.okHttpClient.newCall(request).execute() // ❌ 阻塞主线程
+**修复内容**：
+- 添加 WebView 相关 import（WebViewClient、WebChromeClient、WebSettings、WebResourceRequest、WebResourceError、ColorDrawable）
+- 增强 WebView 配置：
+  - 启用 `domStorageEnabled`（本地存储）
+  - 启用 `databaseEnabled`（数据库）
+  - 启用缩放支持
+  - 启用 `loadWithOverviewMode` 和 `useWideViewPort`
+  - 设置混合内容模式
+- 添加 `WebViewClient` 处理页面加载事件：
+  - `onPageStarted`：记录加载开始日志
+  - `onPageFinished`：记录加载完成日志
+  - `onReceivedError`：记录错误日志（兼容 API 21）
+  - `shouldOverrideUrlLoading`：让 WebView 处理 URL 加载
+- 添加 `WebChromeClient` 处理控制台消息
+- 为 PopupWindow 设置 `ColorDrawable(Color.TRANSPARENT)` 背景
 
-if (response.isSuccessful) {
-    val str = response.bodyAlias()?.string() ?: ""
-    withContext(Dispatchers.Main) {
-        tryStr2Channels(str, null, b, id)
-    }
-    // ...
-}
-```
+**修改位置**：第22-25行（import）、第770-865行（showWebViewPopup 方法）
 
-### 修改后（已修复）
-```kotlin
-// 使用 Dispatchers.IO 执行网络请求，避免阻塞主线程
-val str = withContext(Dispatchers.IO) {  // ✅ 切换到 IO 线程
-    val request = okhttp3.Request.Builder().url(a).build()
-    val response = HttpClient.okHttpClient.newCall(request).execute()
+## 构建验证
 
-    if (response.isSuccessful) {
-        response.bodyAlias()?.string() ?: ""
-    } else {
-        Log.e(TAG, "Request status ${response.codeAlias()}")
-        err = R.string.channel_status_error
-        ""
-    }
-}
+✅ 项目构建成功（`app:assembleDebug`）
 
-if (err == 0 && str.isNotEmpty()) {
-    tryStr2Channels(str, null, b, id)  // 已在主线程，直接调用
-    // ...
-}
-```
+## 后续建议
 
----
-
-## 修复后的执行流程
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  主线程 (Dispatchers.Main)                               │
-│  ├─ viewModelScope.launch { importFromUrl(...) }        │
-│  │   ├─ setImportProgress(0)  → UI 更新 ✅              │
-│  │   ├─ withContext(Dispatchers.IO) { ... }             │
-│  │   │   └─ HTTP 请求（后台线程，不阻塞主线程）         │
-│  │   ├─ setImportProgress(50) → UI 更新 ✅              │
-│  │   ├─ tryStr2Channels() → SP.sources 保存 ✅          │
-│  │   └─ setImportProgress(100) → UI 更新 ✅             │
-│  └─ 刷新页面时数据已保存，列表正常显示 ✅                │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## 验证方式
-
-1. **构建已通过** ✅
-2. 建议手动测试：
-   - 通过 Web 页面添加 `http://192.168.1.170:1905/u/P6jxgUCxE19zRt-ok0FQjEYM/m3u`
-   - 观察进度条是否正常显示
-   - 添加成功后刷新页面，确认源列表正确显示
-
----
-
-## 风险评估
-
-- **影响范围**：仅修改 `importFromUrl` 函数的线程调度
-- **兼容性**：`withContext(Dispatchers.IO)` 是 Kotlin 协程标准用法
-- **副作用**：无，异常处理逻辑保持不变
+1. 在真实安卓设备上测试远程配置功能
+2. 检查二维码是否正常显示
+3. 点击二维码区域，验证 WebView 页面是否正常加载
+4. 对比模拟器行为，确认问题已解决

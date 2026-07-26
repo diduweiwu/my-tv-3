@@ -1,0 +1,3 @@
+- [x] Modify `ModalFragment.kt` to calculate and apply 80% screen height to the appreciation container
+- [x] Update `modal.xml` to ensure layouts respond correctly to programmatic size changes
+- [ ] Verify the build

@@ -1,5 +1,6 @@
 package com.lizongying.mytv0
 
+import MainViewModel
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -10,7 +11,7 @@ import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.media3.common.MimeTypes
+import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.DISCONTINUITY_REASON_AUTO_TRANSITION
@@ -22,8 +23,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.lizongying.mytv0.data.SourceType
 import com.lizongying.mytv0.databinding.PlayerBinding
 import com.lizongying.mytv0.models.TVModel
-import MainViewModel
-import androidx.lifecycle.ViewModelProvider
 
 
 class PlayerFragment : Fragment() {
@@ -33,7 +32,6 @@ class PlayerFragment : Fragment() {
     private var player: ExoPlayer? = null
 
     private var tvModel: TVModel? = null
-    private val aspectRatio = 16f / 9f
 
     private val handler = Handler(Looper.myLooper()!!)
     private val delayHideVolume = 2 * 1000L
@@ -79,17 +77,6 @@ class PlayerFragment : Fragment() {
         player?.playWhenReady = true
         player?.addListener(object : Player.Listener {
             override fun onVideoSizeChanged(videoSize: VideoSize) {
-                val ratio = playerView.measuredWidth.div(playerView.measuredHeight)
-                val layoutParams = playerView.layoutParams
-                if (ratio < aspectRatio) {
-                    layoutParams?.height =
-                        (playerView.measuredWidth.div(aspectRatio)).toInt()
-                    playerView.layoutParams = layoutParams
-                } else if (ratio > aspectRatio) {
-                    layoutParams?.width =
-                        (playerView.measuredHeight.times(aspectRatio)).toInt()
-                    playerView.layoutParams = layoutParams
-                }
                 updateVideoInfo()
             }
 
@@ -170,7 +157,7 @@ class PlayerFragment : Fragment() {
     private fun updateVideoInfo() {
         player?.let { p ->
             var videoFormat: androidx.media3.common.Format? = p.videoFormat
-            
+
             // Fallback to searching tracks if videoFormat is null or incomplete
             if (videoFormat == null || videoFormat.width <= 0) {
                 val tracks = p.currentTracks
@@ -192,11 +179,11 @@ class PlayerFragment : Fragment() {
                 val height = format.height
                 val fps = if (format.frameRate > 0) "${format.frameRate.toInt()}fps" else ""
                 val resolution = "${width}x${height}"
-                
+
                 val infoList = mutableListOf<String>()
                 infoList.add(resolution)
                 if (fps.isNotEmpty()) infoList.add(fps)
-                
+
                 val info = infoList.joinToString(" | ")
                 if (isAdded) {
                     val viewModel = ViewModelProvider(requireActivity())[MainViewModel::class.java]
@@ -219,11 +206,6 @@ class PlayerFragment : Fragment() {
         this.tvModel = tvModel
         player?.stop()
         player?.clearMediaItems()
-        
-        // Reset layout params to prevent scaling artifacts from previous channel
-        binding.playerView.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
-        binding.playerView.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-        binding.playerView.requestLayout()
 
         if (isAdded) {
             val viewModel = ViewModelProvider(requireActivity())[MainViewModel::class.java]

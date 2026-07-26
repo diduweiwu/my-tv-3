@@ -67,12 +67,12 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         binding.list.adapter = listAdapter
         binding.list.layoutManager =
             LinearLayoutManager(context)
-        
+
         // Set list width to one third of screen width
         val screenWidth = resources.displayMetrics.widthPixels
         val listWidth = screenWidth / 3
         binding.list.layoutParams.width = listWidth
-        
+
         listAdapter.setItemListener(this)
 
         binding.menu.setOnClickListener {
@@ -213,10 +213,10 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
                 // Move focus to list and navigate to current playing position
                 groupAdapter.focusable(false)
                 listAdapter.focusable(true)
-                
+
                 // Refresh group list to show active highlight
                 groupAdapter.notifyDataSetChanged()
-                
+
                 if (viewModel.groupModel.positionPlayingValue == viewModel.groupModel.positionValue) {
                     viewModel.groupModel.getCurrentList()?.let {
                         listAdapter.toPosition(it.positionPlayingValue)
@@ -260,10 +260,13 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         }
         groupAdapter.activePosition = position
         groupAdapter.notifyDataSetChanged()
-        
+
         // Scroll group list to active position but don't force focus on it
-        (binding.group.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(position, 0)
-        
+        (binding.group.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+            position,
+            0
+        )
+
         viewModel.groupModel.getCurrentList()?.let {
             listAdapter.toPosition(it.positionPlayingValue)
         }

@@ -215,7 +215,7 @@ class ListAdapter(
             val tv = tvModel.tv
             val channelNum = if (tv.number == -1) tv.id.plus(1) else tv.number
             val cacheKey = channelNum.toString()
-            
+
             var bitmap = bitmapCache[cacheKey]
             if (bitmap == null) {
                 val width = 300
@@ -242,7 +242,11 @@ class ListAdapter(
                 bitmapCache[cacheKey] = bitmap
             }
 
-            val name = if (tv.name.isNotEmpty()) { tv.name } else { tv.title }
+            val name = if (tv.name.isNotEmpty()) {
+                tv.name
+            } else {
+                tv.title
+            }
             imageHelper.loadImage(name, binding.icon, tv.logo)
         }
 

@@ -1,87 +1,127 @@
-# 自增效版本号实现展示
+# 赞赏弹窗并排展示微信/支付宝收款码
 
 ## ✅ 任务完成
 
-已成功实现打包构建时自动递增版本号的功能。
+已成功实现点击"赞赏作者"后，弹窗并排展示 `wechat.png` 和 `alipay.png` 两张收款码图片。
 
 ## 📝 修改内容
 
-### 文件：`app/build.gradle.kts`
+### 1. 文件：`app/src/main/res/layout/modal.xml`
 
-#### 1. 添加必要的导入
-```kotlin
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+**之前**：ConstraintLayout，单个 ImageView
+```xml
+<androidx.constraintlayout.widget.ConstraintLayout ...>
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/modal_image"
+        android:layout_width="200dp"
+        android:layout_height="200dp" />
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/modal_text"
+        .../>
+</androidx.constraintlayout.widget.ConstraintLayout>
 ```
 
-#### 2. 修改 `getVersionCode()` 函数
-**之前**（基于 git tag）：
+**之后**：LinearLayout，支持单张图片和并排双图
+```xml
+<LinearLayout
+    android:id="@+id/modal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <!-- 单张图片（默认隐藏，用于二维码等场景） -->
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/modal_image"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:visibility="gone" />
+
+    <!-- 并排展示两张收款码 -->
+    <LinearLayout
+        android:id="@+id/modal_image_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/modal_image_left"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_margin="8dp"
+            android:contentDescription="WeChat Pay" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/modal_image_right"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_margin="8dp"
+            android:contentDescription="Alipay" />
+    </LinearLayout>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/modal_text"
+        .../>
+</LinearLayout>
+```
+
+### 2. 文件：`app/src/main/java/com/lizongying/mytv3/ModalFragment.kt`
+
+**添加 import**：
 ```kotlin
-fun getVersionCode(): Int {
-    return try {
-        val arr = (getTag().replace(".", " ").replace("-", " ") + " 0").split(" ")
-        arr[0].toInt() * 16777216 + arr[1].toInt() * 65536 + arr[2].toInt() * 256 + arr[3].toInt()
-    } catch (_: Exception) {
-        1
-    }
+import com.lizongying.mytv0.R
+```
+
+**修改 onViewCreated 方法**：
+```kotlin
+val drawableId = arguments?.getInt(KEY_DRAWABLE_ID)
+if (drawableId == R.drawable.appreciate) {
+    // 赞赏弹窗：并排展示两张收款码
+    Glide.with(requireContext())
+        .load(R.drawable.wechat)
+        .into(binding.modalImageLeft)
+    Glide.with(requireContext())
+        .load(R.drawable.alipay)
+        .into(binding.modalImageRight)
+    binding.modalImageContainer.visibility = View.VISIBLE
+    binding.modalText.visibility = View.GONE
+} else if (drawableId != null) {
+    Glide.with(requireContext())
+        .load(drawableId)
+        .into(binding.modalImage)
+    binding.modalImage.visibility = View.VISIBLE
+    binding.modalText.visibility = View.GONE
 }
 ```
 
-**之后**（基于时间戳自增）：
-```kotlin
-fun getVersionCode(): Int {
-    // 基准时间：2024-01-01 00:00:00 UTC 的时间戳（毫秒）
-    val baseTimeMillis = 1704067200000L
-    val currentTimeMillis = System.currentTimeMillis()
-    // 计算从基准时间开始的分钟数，确保每次构建自动递增
-    return ((currentTimeMillis - baseTimeMillis) / (1000 * 60)).toInt()
-}
+### 3. 新增文件
+- 复制 `/Users/itest/Code/my-tv-0/screenshots/appreciate.png` 到 `app/src/main/res/drawable/appreciate.png`
+
+## 🔍 效果展示
+
+点击"赞赏作者"按钮后，弹窗会显示：
+
 ```
-
-#### 3. 修改 `getVersionName()` 函数
-**之前**：
-```kotlin
-fun getVersionName(): String {
-    return getTag().ifEmpty {
-        "0.0.0-1"
-    }
-}
+┌─────────────────────────────────────┐
+│  ┌──────────┐    ┌──────────┐       │
+│  │          │    │          │       │
+│  │  WeChat  │    │  Alipay  │       │
+│  │   收款码  │    │   收款码  │       │
+│  │          │    │          │       │
+│  └──────────┘    └──────────┘       │
+│      (150dp)        (150dp)         │
+└─────────────────────────────────────┘
 ```
-
-**之后**：
-```kotlin
-fun getVersionName(): String {
-    return getTag().ifEmpty {
-        // 无 git tag 时使用日期格式
-        val sdf = SimpleDateFormat("yyyy.MM.dd-HH", Locale.getDefault())
-        sdf.format(Date())
-    }
-}
-```
-
-## 🔍 方案说明
-
-| 项目 | 说明 |
-|------|------|
-| **versionCode** | 从 2024-01-01 开始计算的分钟数，每次构建自动递增 |
-| **versionName** | 优先使用 git tag，无 tag 时使用 `yyyy.MM.dd-HH` 格式日期 |
-| **可用年限** | 约 70 年（到 2094 年左右） |
-| **最大值** | 不会超过 Android 限制（2,100,000,000） |
 
 ## ✅ 验证结果
 
 ```bash
 ./gradlew app:assembleDebug --stacktrace
-# 构建成功！
+# ✅ 构建成功！
 ```
-
-## 📋 后续建议
-
-1. **发布版本时**：建议手动创建 git tag（如 `v1.5.0`），这样 `versionName` 会自动使用标签名
-2. **version.json**：发布时需要同步更新 `version.json` 文件
-3. **本地调试**：无 tag 时，`versionName` 会显示为日期格式（如 `2026.07.26-14`）
 
 ## 🎉 总结
 
-现在每次运行构建命令时，`versionCode` 都会自动递增，无需手动修改版本号文件，大大提高了开发效率！
+现在点击"赞赏作者"按钮，弹窗会并排展示微信和支付宝两张收款码图片，用户可以方便地选择任意一种方式进行赞赏。

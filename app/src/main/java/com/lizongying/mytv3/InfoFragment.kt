@@ -1,5 +1,6 @@
 package com.lizongying.mytv0
 
+import MainViewModel
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
@@ -11,10 +12,9 @@ import androidx.core.view.marginStart
 import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.lizongying.mytv0.data.EPG
 import com.lizongying.mytv0.databinding.InfoBinding
 import com.lizongying.mytv0.models.TVModel
-import com.lizongying.mytv0.data.EPG
-import MainViewModel
 import com.lizongying.mytv3.MyTVApplication
 
 
@@ -115,7 +115,11 @@ class InfoFragment : Fragment() {
 
         when (tv.title) {
             else -> {
-                val name = if (tv.name.isNotEmpty()) { tv.name } else { tv.title }
+                val name = if (tv.name.isNotEmpty()) {
+                    tv.name
+                } else {
+                    tv.title
+                }
 
                 // 只从缓存加载 logo，缓存不存在时显示空白占位图
                 imageHelper.loadImage(name, binding.logo, tv.logo)
@@ -139,7 +143,8 @@ class InfoFragment : Fragment() {
             val endTime = Utils.getDateFormat("HH:mm", currentEpg.endTime)
             binding.desc.text = "$startTime-$endTime  正在播放：${currentEpg.title}"
 
-            val nextEpg = epg?.filter { it.beginTime >= currentEpg.endTime }?.minByOrNull { it.beginTime }
+            val nextEpg =
+                epg?.filter { it.beginTime >= currentEpg.endTime }?.minByOrNull { it.beginTime }
             if (nextEpg != null) {
                 val nextStartTime = Utils.getDateFormat("HH:mm", nextEpg.beginTime)
                 val nextEndTime = Utils.getDateFormat("HH:mm", nextEpg.endTime)

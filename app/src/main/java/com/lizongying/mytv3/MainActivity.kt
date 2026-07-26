@@ -18,6 +18,13 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.PopupWindow
 import android.widget.RelativeLayout
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.webkit.WebChromeClient
+import android.webkit.WebSettings
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceError
+import android.graphics.drawable.ColorDrawable
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -124,24 +131,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initFragments() {
-        playerFragment = supportFragmentManager.findFragmentByTag(PlayerFragment.TAG) as? PlayerFragment
-            ?: PlayerFragment()
-        errorFragment = supportFragmentManager.findFragmentByTag(ErrorFragment.TAG) as? ErrorFragment
-            ?: ErrorFragment()
-        loadingFragment = supportFragmentManager.findFragmentByTag(LoadingFragment.TAG) as? LoadingFragment
-            ?: LoadingFragment()
+        playerFragment =
+            supportFragmentManager.findFragmentByTag(PlayerFragment.TAG) as? PlayerFragment
+                ?: PlayerFragment()
+        errorFragment =
+            supportFragmentManager.findFragmentByTag(ErrorFragment.TAG) as? ErrorFragment
+                ?: ErrorFragment()
+        loadingFragment =
+            supportFragmentManager.findFragmentByTag(LoadingFragment.TAG) as? LoadingFragment
+                ?: LoadingFragment()
         infoFragment = supportFragmentManager.findFragmentByTag(InfoFragment.TAG) as? InfoFragment
             ?: InfoFragment()
-        channelFragment = supportFragmentManager.findFragmentByTag(ChannelFragment.TAG) as? ChannelFragment
-            ?: ChannelFragment()
+        channelFragment =
+            supportFragmentManager.findFragmentByTag(ChannelFragment.TAG) as? ChannelFragment
+                ?: ChannelFragment()
         timeFragment = supportFragmentManager.findFragmentByTag(TimeFragment.TAG) as? TimeFragment
             ?: TimeFragment()
         menuFragment = supportFragmentManager.findFragmentByTag(MenuFragment.TAG) as? MenuFragment
             ?: MenuFragment()
-        settingFragment = supportFragmentManager.findFragmentByTag(SettingFragment.TAG) as? SettingFragment
-            ?: SettingFragment()
-        programFragment = supportFragmentManager.findFragmentByTag(ProgramFragment.TAG) as? ProgramFragment
-            ?: ProgramFragment()
+        settingFragment =
+            supportFragmentManager.findFragmentByTag(SettingFragment.TAG) as? SettingFragment
+                ?: SettingFragment()
+        programFragment =
+            supportFragmentManager.findFragmentByTag(ProgramFragment.TAG) as? ProgramFragment
+                ?: ProgramFragment()
     }
 
     fun updateMenuSize() {
@@ -296,10 +309,10 @@ class MainActivity : AppCompatActivity() {
                             startLoadingTimeout(it)
                         }
                         hideFragment(errorFragment)
-                        
+
                         // Ensure playerFragment is showing before calling play
                         showFragment(playerFragment, PlayerFragment.TAG)
-                        
+
                         playerFragment.play(it)
                         infoFragment.show(it)
                         if (SP.channelNum) {
@@ -307,7 +320,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-                
+
                 // If it's already ready, trigger playback immediately
                 if (it.ready.value == true) {
                     playerFragment.play(it)
@@ -762,9 +775,64 @@ class MainActivity : AppCompatActivity() {
         val binding = SettingsWebBinding.inflate(layoutInflater)
 
         val webView = binding.web
-        webView.settings.javaScriptEnabled = true
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            setSupportZoom(true)
+            builtInZoomControls = true
+            displayZoomControls = false
+            loadWithOverviewMode = true
+            useWideViewPort = true
+            allowFileAccess = false
+            allowContentAccess = false
+            mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+        }
+
         webView.isFocusableInTouchMode = true
         webView.isFocusable = true
+
+        // 添加 WebViewClient 处理页面加载
+        webView.webViewClient = object : WebViewClient() {
+            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                Log.d(TAG, "WebView loading: $url")
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                Log.d(TAG, "WebView loaded: $url")
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
+            ) {
+                super.onReceivedError(view, request, error)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Log.e(TAG, "WebView error: ${error?.description}")
+                } else {
+                    Log.e(TAG, "WebView error occurred")
+                }
+            }
+
+            override fun shouldOverrideUrlLoading(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): Boolean {
+                return false // 让 WebView 处理 URL 加载
+            }
+        }
+
+        // 添加 WebChromeClient
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                Log.d(TAG, "WebView console: ${consoleMessage?.message()}")
+                return true
+            }
+        }
+
         webView.loadUrl(url)
 
         val popupWindow = PopupWindow(
@@ -776,8 +844,8 @@ class MainActivity : AppCompatActivity() {
         popupWindow.inputMethodMode = PopupWindow.INPUT_METHOD_NEEDED
         popupWindow.isFocusable = true
         popupWindow.isTouchable = true
-
         popupWindow.isClippingEnabled = false
+        popupWindow.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         popupWindow.showAtLocation(window.decorView, Gravity.CENTER, 0, 0)
 

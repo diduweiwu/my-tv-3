@@ -1,14 +1,10 @@
 package com.lizongying.mytv0
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import android.util.Log
 import com.bumptech.glide.Glide
-import com.lizongying.mytv0.Utils.getUrls
 import com.lizongying.mytv0.requests.HttpClient
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -37,7 +33,10 @@ class ImageHelper(private val context: Context) {
                     .build()
 
                 HttpClient.okHttpClient.newCall(request).execute().use { response ->
-                    Log.i(TAG, "downloadImage response: code=${response.code}, type=${response.header("Content-Type")}, url=$url")
+                    Log.i(
+                        TAG,
+                        "downloadImage response: code=${response.code}, type=${response.header("Content-Type")}, url=$url"
+                    )
                     if (!response.isSuccessful) {
                         Log.e(TAG, "downloadImage failed: HTTP ${response.code} for $url")
                         return@withContext false
@@ -50,7 +49,10 @@ class ImageHelper(private val context: Context) {
                     val bytes = body.bytes()
                     Log.i(TAG, "downloadImage downloaded ${bytes.size} bytes for $url")
                     if (bytes.size < 100) {
-                        Log.e(TAG, "downloadImage failed: file too small (${bytes.size} bytes), probably not an image")
+                        Log.e(
+                            TAG,
+                            "downloadImage failed: file too small (${bytes.size} bytes), probably not an image"
+                        )
                         return@withContext false
                     }
                     file.writeBytes(bytes)

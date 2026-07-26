@@ -30,7 +30,7 @@ class EPGXmlParser {
             val parser: XmlPullParser = Xml.newPullParser()
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
             parser.setInput(input, null)
-            
+
             var eventType = parser.eventType
             while (eventType != XmlPullParser.END_DOCUMENT) {
                 if (eventType == XmlPullParser.START_TAG) {
@@ -49,11 +49,12 @@ class EPGXmlParser {
                                 }
                             }
                         }
+
                         PROGRAMME_TAG -> {
                             val channelId = parser.getAttributeValue(ns, CHANNEL_ATTRIBUTE)
                             val start = parser.getAttributeValue(ns, START_ATTRIBUTE)
                             val stop = parser.getAttributeValue(ns, STOP_ATTRIBUTE)
-                            
+
                             if (channelId != null && start != null && stop != null) {
                                 var title = ""
                                 while (parser.next() != XmlPullParser.END_TAG || parser.name != PROGRAMME_TAG) {
@@ -61,7 +62,7 @@ class EPGXmlParser {
                                         title = parser.nextText()
                                     }
                                 }
-                                
+
                                 val stopTime = formatFTime(stop)
                                 if (stopTime > now && title.isNotEmpty()) {
                                     val name = channelMap[channelId] ?: channelId

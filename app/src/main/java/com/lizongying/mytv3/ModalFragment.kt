@@ -10,9 +10,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.lizongying.mytv0.Utils.getDateTimestamp
 import com.lizongying.mytv0.databinding.ModalBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class ModalFragment : DialogFragment() {
@@ -45,15 +49,36 @@ class ModalFragment : DialogFragment() {
 
         val url = arguments?.getString(KEY_URL)
         if (!url.isNullOrEmpty()) {
-            val size = Utils.dpToPx(200)
-            val u = "$url?${getDateTimestamp().toString().reversed()}"
-            val img = QrCodeUtil().createQRCodeBitmap(u, size, size)
+            val displayMetrics = resources.displayMetrics
+            val screenHeight = displayMetrics.heightPixels
+            val targetHeight = (screenHeight * 0.8).toInt()
+            val size = if (isTV()) targetHeight else Utils.dpToPx(200)
 
-            Glide.with(requireContext())
-                .load(img)
-                .into(binding.modalImage)
-            binding.modalText.text = u.removePrefix("http://")
-            binding.modalText.visibility = View.VISIBLE
+            val u = "$url?${getDateTimestamp().toString().reversed()}"
+
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                val img = QrCodeUtil().createQRCodeBitmap(u, size, size)
+                withContext(Dispatchers.Main) {
+                    if (_binding != null) {
+                        if (img != null) {
+                            binding.modalImage.layoutParams.width = size
+                            binding.modalImage.layoutParams.height = size
+                            binding.modalImage.visibility = View.VISIBLE
+
+                            Glide.with(requireContext())
+                                .load(img)
+                                .into(binding.modalImage)
+                            binding.modalText.text = u.removePrefix("http://")
+                            binding.modalText.visibility = View.VISIBLE
+                        } else {
+                            Log.e(TAG, "QR code generation failed for URL: $u")
+                            binding.modalText.text = "二维码生成失败"
+                            binding.modalText.visibility = View.VISIBLE
+                        }
+                    }
+                }
+            }
+
             if (!isTV()) {
                 binding.modal.setOnClickListener {
                     try {
@@ -66,10 +91,38 @@ class ModalFragment : DialogFragment() {
                 }
             }
         } else {
-            Glide.with(requireContext())
-                .load(arguments?.getInt(KEY_DRAWABLE_ID))
-                .into(binding.modalImage)
-            binding.modalText.visibility = View.GONE
+            val drawableId = arguments?.getInt(KEY_DRAWABLE_ID)
+            if (drawableId == R.drawable.appreciate) {
+                // 赞赏弹窗：并排展示两张收款码
+                val displayMetrics = resources.displayMetrics
+                val screenHeight = displayMetrics.heightPixels
+                val targetHeight = (screenHeight * 0.8).toInt()
+
+                binding.modalImageContainer.layoutParams.height = targetHeight
+
+                val margin = Utils.dpToPx(8)
+                val imageSize = targetHeight - 2 * margin
+
+                binding.modalImageLeft.layoutParams.width = imageSize
+                binding.modalImageLeft.layoutParams.height = imageSize
+                binding.modalImageRight.layoutParams.width = imageSize
+                binding.modalImageRight.layoutParams.height = imageSize
+
+                Glide.with(requireContext())
+                    .load(R.drawable.wechat)
+                    .into(binding.modalImageLeft)
+                Glide.with(requireContext())
+                    .load(R.drawable.alipay)
+                    .into(binding.modalImageRight)
+                binding.modalImageContainer.visibility = View.VISIBLE
+                binding.modalText.visibility = View.GONE
+            } else if (drawableId != null) {
+                Glide.with(requireContext())
+                    .load(drawableId)
+                    .into(binding.modalImage)
+                binding.modalImage.visibility = View.VISIBLE
+                binding.modalText.visibility = View.GONE
+            }
         }
 
         handler.postDelayed(hideAppreciateModal, delayHideAppreciateModal)

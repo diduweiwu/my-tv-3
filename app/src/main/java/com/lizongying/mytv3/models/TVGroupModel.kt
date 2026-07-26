@@ -204,10 +204,12 @@ class TVGroupModel : ViewModel() {
             Log.e(TAG, "initTVGroup error: tvGroupValue.size < 2")
             return
         }
-        _tvGroup.safeSetValue(mutableListOf(
-            tvGroupValue[0],
-            tvGroupValue[1]
-        ))
+        _tvGroup.safeSetValue(
+            mutableListOf(
+                tvGroupValue[0],
+                tvGroupValue[1]
+            )
+        )
         tvGroupValue[1].initTVList()
     }
 

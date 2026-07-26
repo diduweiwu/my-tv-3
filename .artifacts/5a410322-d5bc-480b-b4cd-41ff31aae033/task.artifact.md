@@ -1,0 +1,9 @@
+- [x] Optimize `MainViewModel.kt`
+    - [x] Refactor `readEPG` matching logic to background thread
+    - [x] Precompute normalized channel names
+    - [x] Fix `preloadLogo` scope and optimization
+- [x] Optimize `ModalFragment.kt`
+    - [x] Move QR code generation to background thread using `lifecycleScope`
+- [x] Verification
+    - [x] Build project
+    - [x] Manual verification of UI responsiveness

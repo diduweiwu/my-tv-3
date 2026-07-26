@@ -22,9 +22,12 @@ import com.lizongying.mytv0.ModalFragment.Companion.KEY_URL
 import com.lizongying.mytv0.SimpleServer.Companion.PORT
 import com.lizongying.mytv0.databinding.SettingBinding
 import com.lizongying.mytv3.MyTVApplication
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
-import kotlinx.coroutines.launch
 
 
 class SettingFragment : Fragment() {
@@ -36,7 +39,18 @@ class SettingFragment : Fragment() {
 
     private lateinit var updateManager: UpdateManager
 
-    private var server = "http://${PortUtil.lan()}:$PORT"
+    private var server = run {
+        val ip = PortUtil.lan()
+        if (ip != null) {
+            "http://$ip:$PORT"
+        } else {
+            Log.e(TAG, "无法获取本地IP地址")
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(requireContext(), "无法获取本地IP地址，请检查网络连接", Toast.LENGTH_LONG).show()
+            }
+            "http://127.0.0.1:$PORT"
+        }
+    }
 
     private lateinit var viewModel: MainViewModel
 
@@ -127,6 +141,7 @@ class SettingFragment : Fragment() {
                         viewModel.updateUIAlpha()
                         return@setOnKeyListener true
                     }
+
                     KeyEvent.KEYCODE_DPAD_RIGHT -> {
                         val current = SP.uiAlpha
                         val next = min(255, current + 25)
@@ -333,9 +348,17 @@ class SettingFragment : Fragment() {
         }
     }
 
-    private fun checkAndAddPermission(context: Context, permission: String, permissionsList: MutableList<String>) {
+    private fun checkAndAddPermission(
+        context: Context,
+        permission: String,
+        permissionsList: MutableList<String>
+    ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-            ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+            ContextCompat.checkSelfPermission(
+                context,
+                permission
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             permissionsList.add(permission)
         }
     }

@@ -8,10 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.JsonSyntaxException
 import com.lizongying.mytv0.ImageHelper
-import com.lizongying.mytv3.MyTVApplication
 import com.lizongying.mytv0.R
 import com.lizongying.mytv0.SP
-import com.lizongying.mytv0.safeSetValue
 import com.lizongying.mytv0.Utils.getDateFormat
 import com.lizongying.mytv0.Utils.getUrls
 import com.lizongying.mytv0.bodyAlias
@@ -29,16 +27,18 @@ import com.lizongying.mytv0.models.TVGroupModel
 import com.lizongying.mytv0.models.TVListModel
 import com.lizongying.mytv0.models.TVModel
 import com.lizongying.mytv0.requests.HttpClient
+import com.lizongying.mytv0.safeSetValue
 import com.lizongying.mytv0.showToast
+import com.lizongying.mytv3.MyTVApplication
 import io.github.lizongying.Gua
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.Semaphore
 import java.io.File
 import java.io.InputStream
+import java.util.concurrent.Semaphore
 
 
 class MainViewModel : ViewModel() {
@@ -203,53 +203,59 @@ class MainViewModel : ViewModel() {
         val semaphore = Semaphore(15)
 
         // 并行预加载所有频道的 logo
-        val jobs = listModel.map { tvModel ->
-            var name = tvModel.tv.name
-            if (name.isEmpty()) {
-                name = tvModel.tv.title
-            }
-            name = name.substringBefore(" ")
-            val url = tvModel.tv.logo
+        withContext(Dispatchers.IO) {
+            val jobs = listModel.map { tvModel ->
+                var name = tvModel.tv.name
+                if (name.isEmpty()) {
+                    name = tvModel.tv.title
+                }
+                name = name.substringBefore(" ")
+                val url = tvModel.tv.logo
 
-            // 构建 URL 列表：优先 tvg-logo，其次 gitee 备用
-            val urls = mutableListOf<String>()
-            if (url.isNotEmpty()) {
-                urls.addAll(getUrls(url))
-            }
-            val logoFileName = if (url.isNotEmpty()) {
-                url.substringAfterLast("/")
-            } else {
-                "${name.uppercase()}.png"
-            }
-            val fallbackUrl = "https://gitee.com/mytv-android/myTVlogo/raw/main/img/$logoFileName"
-            urls.add(fallbackUrl)
+                // 构建 URL 列表：优先 tvg-logo，其次 gitee 备用
+                val urls = mutableListOf<String>()
+                if (url.isNotEmpty()) {
+                    urls.addAll(getUrls(url))
+                }
+                val logoFileName = if (url.isNotEmpty()) {
+                    url.substringAfterLast("/")
+                } else {
+                    "${name.uppercase()}.png"
+                }
+                val fallbackUrl =
+                    "https://gitee.com/mytv-android/myTVlogo/raw/main/img/$logoFileName"
+                urls.add(fallbackUrl)
 
-            Log.d(TAG, "preloadLogo: $name, urls=${urls.size}, first=${urls.first()}, last=fallback")
+                Log.d(
+                    TAG,
+                    "preloadLogo: $name, urls=${urls.size}, first=${urls.first()}, last=fallback"
+                )
 
-            // 每个频道独立协程下载，使用 Semaphore 限制并发
-            kotlinx.coroutines.GlobalScope.async(Dispatchers.IO) {
-                semaphore.acquire()
-                try {
-                    // 检查缓存是否已存在
-                    val cacheKey = "gitee_$logoFileName"
-                    if (imageHelper.isCached(cacheKey)) {
-                        Log.d(TAG, "preloadLogo cached: $name")
-                        return@async
+                // 每个频道独立协程下载，使用 Semaphore 限制并发
+                async {
+                    semaphore.acquire()
+                    try {
+                        // 检查缓存是否已存在
+                        val cacheKey = "gitee_$logoFileName"
+                        if (imageHelper.isCached(cacheKey)) {
+                            Log.d(TAG, "preloadLogo cached: $name")
+                            return@async
+                        }
+                        Log.d(TAG, "preloadLogo downloading: $name")
+                        imageHelper.preloadImage(
+                            name,
+                            urls,
+                            url,
+                        )
+                    } catch (e: Exception) {
+                        Log.e(TAG, "preloadLogo failed: $name, error: ${e.message}")
+                    } finally {
+                        semaphore.release()
                     }
-                    Log.d(TAG, "preloadLogo downloading: $name")
-                    imageHelper.preloadImage(
-                        name,
-                        urls,
-                        url,
-                    )
-                } catch (e: Exception) {
-                    Log.e(TAG, "preloadLogo failed: $name, error: ${e.message}")
-                } finally {
-                    semaphore.release()
                 }
             }
+            jobs.awaitAll()
         }
-        jobs.awaitAll()
         Log.d(TAG, "preloadLogo all done")
     }
 
@@ -257,28 +263,38 @@ class MainViewModel : ViewModel() {
         try {
             val res = EPGXmlParser().parse(input)
 
-            withContext(Dispatchers.Main) {
-                val e1 = mutableMapOf<String, List<EPG>>()
-                for (m in listModel) {
-                    val name = m.tv.name.ifEmpty { m.tv.title }.lowercase()
-                    if (name.isEmpty()) {
-                        continue
-                    }
+            val e1 = mutableMapOf<String, List<EPG>>()
+            // 预先标准化 listModel 中的频道名，避免在嵌套循环中重复计算
+            val normalizedChannels = listModel.map { m ->
+                val name = m.tv.name.ifEmpty { m.tv.title }.lowercase()
+                Triple(m, name, if (name.isEmpty()) "" else normalizeChannelName(name))
+            }
 
-                    for ((n, epg) in res) {
-                        val epgName = n.lowercase()
-                        val normalizedChannel = normalizeChannelName(name)
-                        val normalizedEpg = normalizeChannelName(epgName)
+            // 预先标准化 res 中的 EPG 名称
+            val normalizedEpgs = res.map { (n, epg) ->
+                val epgName = n.lowercase()
+                Pair(epg, if (epgName.isEmpty()) "" else normalizeChannelName(epgName))
+            }
 
-                        if (isChannelMatch(normalizedChannel, normalizedEpg)) {
-                            m.setEpg(epg)
-                            e1[name] = epg
-                            break
-                        }
+            for ((m, name, normalizedChannel) in normalizedChannels) {
+                if (name.isEmpty()) continue
+
+                for ((epg, normalizedEpg) in normalizedEpgs) {
+                    if (normalizedEpg.isEmpty()) continue
+
+                    if (isChannelMatch(normalizedChannel, normalizedEpg)) {
+                        m.setEpg(epg)
+                        e1[name] = epg
+                        break
                     }
                 }
-                cacheEPG.writeText(gson.toJson(e1))
             }
+
+            val json = gson.toJson(e1)
+            withContext(Dispatchers.IO) {
+                cacheEPG.writeText(json)
+            }
+
             Log.i(TAG, "readEPG success")
             true
         } catch (e: Exception) {
@@ -291,17 +307,15 @@ class MainViewModel : ViewModel() {
         try {
             val res: Map<String, List<EPG>> = gson.fromJson(str, typeEPGMap)
 
-            withContext(Dispatchers.Main) {
-                for (m in listModel) {
-                    val name = m.tv.name.ifEmpty { m.tv.title }.lowercase()
-                    if (name.isEmpty()) {
-                        continue
-                    }
+            for (m in listModel) {
+                val name = m.tv.name.ifEmpty { m.tv.title }.lowercase()
+                if (name.isEmpty()) {
+                    continue
+                }
 
-                    val epg = res[name]
-                    if (epg != null) {
-                        m.setEpg(epg)
-                    }
+                val epg = res[name]
+                if (epg != null) {
+                    m.setEpg(epg)
                 }
             }
             Log.i(TAG, "readEPG success")

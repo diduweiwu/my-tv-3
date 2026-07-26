@@ -1,0 +1,3 @@
+- [x] Modify `player.xml` to use `fit` resize mode
+- [x] Remove manual aspect ratio logic in `PlayerFragment.kt`
+- [x] Verify build and behavior

@@ -63,17 +63,17 @@ class ErrorFragment : Fragment() {
             pendingCountdownCallback = onFinish
             return
         }
-        
+
         // Stop any existing countdown first
         stopCountdown()
-        
+
         countdownSeconds = 3
         binding.countdown.text = "${countdownSeconds}秒后自动换台"
-        
+
         autoSkipRunnable = object : Runnable {
             override fun run() {
                 if (!isAdded || _binding == null) return
-                
+
                 countdownSeconds--
                 if (countdownSeconds <= 0) {
                     binding.countdown.text = "正在换台..."

@@ -1,8 +1,8 @@
 package com.lizongying.mytv0
 
+import MainViewModel
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.lizongying.mytv0.data.EPG
 import com.lizongying.mytv0.databinding.ProgramBinding
-import MainViewModel
 
 class ProgramFragment : Fragment(), ProgramAdapter.ItemListener {
     private var _binding: ProgramBinding? = null

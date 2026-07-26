@@ -79,7 +79,8 @@ object SP {
     const val DEFAULT_LOG_TIMES = 10
     const val DEFAULT_SOFT_DECODE = false
     const val DEFAULT_UI_ALPHA = 255
-    val DEFAULT_UA: String = "Linux-6" + (1..6).map { "abcdefghijklmnopqrstuvwxyz0123456789".random() }.joinToString("")
+    val DEFAULT_UA: String =
+        "Linux-6" + (1..6).map { "abcdefghijklmnopqrstuvwxyz0123456789".random() }.joinToString("")
 
     // 0 favorite; 1 all
     const val DEFAULT_POSITION_GROUP = 1

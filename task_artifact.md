@@ -1,8 +1,8 @@
-# 自增效版本号实现任务
+# 赞赏弹窗并排展示微信/支付宝收款码
 
 ## 任务清单
-- [x] 修改 `app/build.gradle.kts` 中的 `getVersionCode()` 函数
-- [x] 修改 `app/build.gradle.kts` 中的 `getVersionName()` 函数（保持 git tag 逻辑，无 tag 时使用日期格式）
+- [x] 修改 `modal.xml` 布局文件，支持并排展示两张图片
+- [x] 修改 `ModalFragment.kt`，在赞赏弹窗中加载 wechat.png 和 alipay.png
 - [x] 验证构建是否正常
 
 ## 执行状态
