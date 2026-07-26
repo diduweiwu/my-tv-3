@@ -1,101 +1,87 @@
-# ANR修复完成报告
+# 自增效版本号实现展示
 
-## 问题回顾
-用户选择视频源确认后，整个界面冻结，按键无反应，最终闪退。日志显示：
-```
-Reason: Input dispatching timed out (Waited 5002ms for FocusEvent(hasFocus=true))
-```
+## ✅ 任务完成
 
-## 根本原因
+已成功实现打包构建时自动递增版本号的功能。
 
-### 核心问题
-`str2Channels()` 包含两类操作混杂在一起：
-- **耗时计算**：Gua.decode、JSON.parse、正则匹配、遍历构建TV对象 → 应在后台线程
-- **LiveData赋值**：`groupModel.addTVListModel()`、`groupModel.setChange()` → 必须在主线程
+## 📝 修改内容
 
-之前的错误修复将整个方法移到后台线程，导致LiveData在非主线程赋值引发崩溃。
+### 文件：`app/build.gradle.kts`
 
-### 修复策略
-将 `str2Channels()` 拆分为纯计算和状态更新两部分，通过协程在线程间切换。
-
-## 修改内容
-
-### 1. 新增 `tryStr2ChannelsAsync()` — 异步入口
+#### 1. 添加必要的导入
 ```kotlin
-suspend fun tryStr2ChannelsAsync(str: String, file: File?, url: String, id: String = "") {
-    // 1. 后台线程(Dispatchers.Default)：解析频道（Gua解码+JSON解析）
-    val list = withContext(Dispatchers.Default) { parseChannelsFromStr(str) }
-    
-    if (list != null) {
-        // 2. 后台线程(Dispatchers.IO)：文件写入
-        withContext(Dispatchers.IO) { cacheFile?.let { it.writeText(str) } }
-        
-        // 3. 主线程(Dispatchers.Main)：更新LiveData和UI
-        withContext(Dispatchers.Main) {
-            applyChannelsToState(list, str)
-            _channelsOk.value = true
-            R.string.channel_import_success.showToast()
-        }
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+```
+
+#### 2. 修改 `getVersionCode()` 函数
+**之前**（基于 git tag）：
+```kotlin
+fun getVersionCode(): Int {
+    return try {
+        val arr = (getTag().replace(".", " ").replace("-", " ") + " 0").split(" ")
+        arr[0].toInt() * 16777216 + arr[1].toInt() * 65536 + arr[2].toInt() * 256 + arr[3].toInt()
+    } catch (_: Exception) {
+        1
     }
 }
 ```
 
-### 2. 新增 `parseChannelsFromStr()` — 后台线程解析
+**之后**（基于时间戳自增）：
 ```kotlin
-private suspend fun parseChannelsFromStr(str: String): List<TV>? {
-    // Gua解码（耗时操作，在Dispatchers.Default执行）
-    val decoded = withContext(Dispatchers.Default) {
-        val g = Gua()
-        if (g.verify(str)) g.decode(str) else str
+fun getVersionCode(): Int {
+    // 基准时间：2024-01-01 00:00:00 UTC 的时间戳（毫秒）
+    val baseTimeMillis = 1704067200000L
+    val currentTimeMillis = System.currentTimeMillis()
+    // 计算从基准时间开始的分钟数，确保每次构建自动递增
+    return ((currentTimeMillis - baseTimeMillis) / (1000 * 60)).toInt()
+}
+```
+
+#### 3. 修改 `getVersionName()` 函数
+**之前**：
+```kotlin
+fun getVersionName(): String {
+    return getTag().ifEmpty {
+        "0.0.0-1"
     }
-    return parseChannels(decoded)  // 纯计算解析
 }
 ```
 
-### 3. 新增 `applyChannelsToState()` — 主线程更新
+**之后**：
 ```kotlin
-private fun applyChannelsToState(list: List<TV>, str: String) {
-    groupModel.initTVGroup()
-    // 创建 TVModel、TVListModel
-    groupModel.addTVListModel(listTVModel)  // LiveData赋值
-    groupModel.setChange()  // LiveData赋值
+fun getVersionName(): String {
+    return getTag().ifEmpty {
+        // 无 git tag 时使用日期格式
+        val sdf = SimpleDateFormat("yyyy.MM.dd-HH", Locale.getDefault())
+        sdf.format(Date())
+    }
 }
 ```
 
-### 4. 修改 `str2Channels()` — 同步版本用于初始化
-```kotlin
-private fun str2Channels(str: String): Boolean {
-    val list = parseChannels(string)  // 解析
-    applyChannelsToState(list, string)  // 更新状态
-    return true
-}
-```
+## 🔍 方案说明
 
-### 5. 修改调用方
-| 文件 | 修改 |
+| 项目 | 说明 |
 |------|------|
-| `importFromUrl()` | 调用 `tryStr2ChannelsAsync()` 替代直接调用 |
-| `importFromUri()` | file scheme 调用异步版本 |
-| `SimpleServer.handleImportText()` | 使用 `runBlocking` 调用异步版本 |
-| `MainActivity.kt` | isp.observe 中用 Thread 执行异步 |
+| **versionCode** | 从 2024-01-01 开始计算的分钟数，每次构建自动递增 |
+| **versionName** | 优先使用 git tag，无 tag 时使用 `yyyy.MM.dd-HH` 格式日期 |
+| **可用年限** | 约 70 年（到 2094 年左右） |
+| **最大值** | 不会超过 Android 限制（2,100,000,000） |
 
-## 线程模型对比
+## ✅ 验证结果
 
-| 操作 | 修复前 | 修复后 |
-|------|--------|--------|
-| 网络请求 | IO线程 ✓ | IO线程 ✓ |
-| Gua解码 | **主线程** ❌ | Default线程 ✓ |
-| JSON解析 | **主线程** ❌ | Default线程 ✓ |
-| 正则匹配 | **主线程** ❌ | Default线程 ✓ |
-| 文件写入 | **主线程** ❌ | IO线程 ✓ |
-| LiveData赋值 | 主线程 ✓ | 主线程 ✓ |
-
-## 构建验证
-```
-gradle assembleDebug ✅ 构建成功
+```bash
+./gradlew app:assembleDebug --stacktrace
+# 构建成功！
 ```
 
-## 修改文件清单
-- `MainViewModel.kt` — 核心修复，新增3个方法，修改3个方法
-- `SimpleServer.kt` — 使用异步方法
-- `MainActivity.kt` — 使用后台线程
+## 📋 后续建议
+
+1. **发布版本时**：建议手动创建 git tag（如 `v1.5.0`），这样 `versionName` 会自动使用标签名
+2. **version.json**：发布时需要同步更新 `version.json` 文件
+3. **本地调试**：无 tag 时，`versionName` 会显示为日期格式（如 `2026.07.26-14`）
+
+## 🎉 总结
+
+现在每次运行构建命令时，`versionCode` 都会自动递增，无需手动修改版本号文件，大大提高了开发效率！

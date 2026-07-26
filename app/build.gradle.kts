@@ -1,4 +1,7 @@
 import java.io.BufferedReader
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 plugins {
     alias(libs.plugins.android.application)
@@ -91,17 +94,18 @@ fun getTag(): String {
 }
 
 fun getVersionCode(): Int {
-    return try {
-        val arr = (getTag().replace(".", " ").replace("-", " ") + " 0").split(" ")
-        arr[0].toInt() * 16777216 + arr[1].toInt() * 65536 + arr[2].toInt() * 256 + arr[3].toInt()
-    } catch (_: Exception) {
-        1
-    }
+    // 基准时间：2024-01-01 00:00:00 UTC 的时间戳（毫秒）
+    val baseTimeMillis = 1704067200000L
+    val currentTimeMillis = System.currentTimeMillis()
+    // 计算从基准时间开始的分钟数，确保每次构建自动递增
+    return ((currentTimeMillis - baseTimeMillis) / (1000 * 60)).toInt()
 }
 
 fun getVersionName(): String {
     return getTag().ifEmpty {
-        "0.0.0-1"
+        // 无 git tag 时使用日期格式
+        val sdf = SimpleDateFormat("yyyy.MM.dd-HH", Locale.getDefault())
+        sdf.format(Date())
     }
 }
 

@@ -1,11 +1,11 @@
-# ANR修复任务追踪
+# 自增效版本号实现任务
 
-## 任务列表
+## 任务清单
+- [x] 修改 `app/build.gradle.kts` 中的 `getVersionCode()` 函数
+- [x] 修改 `app/build.gradle.kts` 中的 `getVersionName()` 函数（保持 git tag 逻辑，无 tag 时使用日期格式）
+- [x] 验证构建是否正常
 
-- [x] 修改 `importFromUrl` 方法 - 调用新的异步方法 `tryStr2ChannelsAsync`
-- [x] 添加 `tryStr2ChannelsAsync` 方法 - 后台线程耗时计算 + 主线程更新UI
-- [x] 添加 `parseChannelsFromStr` 方法 - 在后台线程执行 Gua 解码和解析
-- [x] 拆分 `str2Channels` 为 `parseChannels` + `applyChannelsToState`
-- [x] 修改 `importFromUri` 方法 - file scheme 路径调用异步方法
-- [x] 修改 `SimpleServer.handleImportText` - 使用异步方法
-- [x] 构建验证 - 确保编译通过
+## 执行状态
+- 开始时间：2026-07-26
+- 完成时间：2026-07-26
+- 状态：✅ 已完成
