@@ -22,7 +22,6 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
     private lateinit var groupAdapter: GroupAdapter
     private lateinit var listAdapter: ListAdapter
 
-    private var groupWidth = 0
     private var listWidth = 0
 
     private lateinit var viewModel: MainViewModel
@@ -67,6 +66,8 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         val screenWidth = resources.displayMetrics.widthPixels
         val listWidth = screenWidth / 3
         binding.list.layoutParams.width = listWidth
+        // 分组列表也固定同样宽度，避免 wrap_content 挤成一坨
+        binding.groupContainer.layoutParams.width = listWidth
 
         listAdapter.setItemListener(this)
 
@@ -120,41 +121,22 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         }
     }
 
-    fun calculateGroupWidth(): Int {
-        val application = requireActivity().applicationContext as MyTVApplication
-        val paint = android.graphics.Paint()
-        
-        // Measure group names width (18sp)
-        paint.textSize = application.sp2Px(18f)
-        var maxGroupWidth = 0f
-        val groupCount = viewModel.groupModel.size()
-        for (i in 0 until groupCount) {
-            val listTVModel = viewModel.groupModel.getTVListModel(i)
-            val title = listTVModel?.getName() ?: ""
-            val translatedTitle = when (title) {
-                "我的收藏" -> getString(R.string.my_favorites)
-                "全部頻道" -> getString(R.string.all_channels)
-                else -> title
-            }
-            maxGroupWidth = maxOf(maxGroupWidth, paint.measureText(translatedTitle))
-        }
-        
-        // Add padding and margin
-        return (maxGroupWidth + application.dp2Px(40)).toInt()
-    }
+
 
     fun updateSize() {
-        groupWidth = calculateGroupWidth()
+        val screenWidth = resources.displayMetrics.widthPixels
+        val listWidth = screenWidth / 3
+        
+        // Use a fixed proportion of screen width for the group list
+        val baseGroupWidth = screenWidth / 6
 
         binding.groupContainer.layoutParams.width = if (SP.compactMenu) {
-            (groupWidth * 0.9).toInt()
+            (baseGroupWidth * 0.9).toInt()
         } else {
-            groupWidth
+            baseGroupWidth
         }
 
         // Set list width to one third of screen width
-        val screenWidth = resources.displayMetrics.widthPixels
-        val listWidth = screenWidth / 3
         binding.list.layoutParams.width = if (SP.compactMenu) {
             listWidth * 4 / 5
         } else {
