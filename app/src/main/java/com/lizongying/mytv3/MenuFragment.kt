@@ -51,12 +51,7 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         binding.group.adapter = groupAdapter
         binding.group.layoutManager =
             LinearLayoutManager(context)
-        groupWidth = application.px2Px(binding.group.layoutParams.width)
-        binding.group.layoutParams.width = if (SP.compactMenu) {
-            groupWidth * 2 / 3
-        } else {
-            groupWidth
-        }
+
         groupAdapter.setItemListener(this)
 
         listAdapter = ListAdapter(
@@ -108,6 +103,15 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
 
     fun update() {
         view?.post {
+            val groupCount = viewModel.groupModel.size()
+            if (groupCount <= 1) {
+                binding.groupContainer.visibility = View.GONE
+                groupAdapter.focusable(false)
+                listAdapter.focusable(true)
+            } else {
+                binding.groupContainer.visibility = View.VISIBLE
+            }
+
             groupAdapter.changed()
 
             getList()?.let {
@@ -116,22 +120,45 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         }
     }
 
-    fun updateSize() {
-        view?.post {
-            binding.group.layoutParams.width = if (SP.compactMenu) {
-                groupWidth * 2 / 3
-            } else {
-                groupWidth
+    fun calculateGroupWidth(): Int {
+        val application = requireActivity().applicationContext as MyTVApplication
+        val paint = android.graphics.Paint()
+        
+        // Measure group names width (18sp)
+        paint.textSize = application.sp2Px(18f)
+        var maxGroupWidth = 0f
+        val groupCount = viewModel.groupModel.size()
+        for (i in 0 until groupCount) {
+            val listTVModel = viewModel.groupModel.getTVListModel(i)
+            val title = listTVModel?.getName() ?: ""
+            val translatedTitle = when (title) {
+                "我的收藏" -> getString(R.string.my_favorites)
+                "全部頻道" -> getString(R.string.all_channels)
+                else -> title
             }
+            maxGroupWidth = maxOf(maxGroupWidth, paint.measureText(translatedTitle))
+        }
+        
+        // Add padding and margin
+        return (maxGroupWidth + application.dp2Px(40)).toInt()
+    }
 
-            // Set list width to one third of screen width
-            val screenWidth = resources.displayMetrics.widthPixels
-            val listWidth = screenWidth / 3
-            binding.list.layoutParams.width = if (SP.compactMenu) {
-                listWidth * 4 / 5
-            } else {
-                listWidth
-            }
+    fun updateSize() {
+        groupWidth = calculateGroupWidth()
+
+        binding.groupContainer.layoutParams.width = if (SP.compactMenu) {
+            (groupWidth * 0.9).toInt()
+        } else {
+            groupWidth
+        }
+
+        // Set list width to one third of screen width
+        val screenWidth = resources.displayMetrics.widthPixels
+        val listWidth = screenWidth / 3
+        binding.list.layoutParams.width = if (SP.compactMenu) {
+            listWidth * 4 / 5
+        } else {
+            listWidth
         }
     }
 
@@ -234,6 +261,9 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
     override fun onKey(listAdapter: ListAdapter, keyCode: Int): Boolean {
         when (keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT -> {
+                if (binding.groupContainer.visibility == View.GONE) {
+                    return false
+                }
                 // Move focus back to group list
                 listAdapter.clear()
                 groupAdapter.focusable(true)
@@ -246,7 +276,15 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
     }
 
     fun onVisible() {
-        if (viewModel.groupModel.tvGroupValue.size < 2 || viewModel.groupModel.getAllList()
+        val groupCount = viewModel.groupModel.size()
+        if (groupCount <= 1) {
+            binding.groupContainer.visibility = View.GONE
+        } else {
+            binding.groupContainer.visibility = View.VISIBLE
+            updateSize() // Ensure width is recalculated when groups change
+        }
+
+        if (groupCount == 0 || viewModel.groupModel.getAllList()
                 ?.size() == 0
         ) {
             R.string.channel_not_exist.showToast()
@@ -269,6 +307,11 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
 
         viewModel.groupModel.getCurrentList()?.let {
             listAdapter.toPosition(it.positionPlayingValue)
+        }
+
+        if (binding.groupContainer.visibility == View.GONE) {
+            groupAdapter.focusable(false)
+            listAdapter.focusable(true)
         }
 
         (activity as MainActivity).menuActive()

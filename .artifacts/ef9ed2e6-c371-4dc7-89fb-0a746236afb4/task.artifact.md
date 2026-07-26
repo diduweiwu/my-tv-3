@@ -1,0 +1,5 @@
+- [x] 为 `menu.xml` 中的分组列表容器添加 ID `@+id/group_container`
+- [x] 在 `MenuFragment.kt` 中修复分组列表宽度计算逻辑
+- [x] 在 `MenuFragment.kt` 中实现根据分组数量显示/隐藏 `group_container` 的逻辑
+- [x] 优化隐藏分组栏时的焦点处理逻辑
+- [x] 验证编译是否通过
