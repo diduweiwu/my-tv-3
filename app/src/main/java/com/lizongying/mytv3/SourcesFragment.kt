@@ -108,6 +108,8 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
             }
         }
 
+        // 立即隐藏弹窗
+        (activity as? MainActivity)?.hideAllPopups()
         dismiss()
     }
 

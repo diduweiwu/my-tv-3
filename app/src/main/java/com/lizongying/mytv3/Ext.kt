@@ -12,6 +12,7 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
+import com.lizongying.mytv3.MyTVApplication
 import java.security.MessageDigest
 
 private const val TAG = "Extensions"

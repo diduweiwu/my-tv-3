@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private val delayHideMenu = 10 * 1000L
     private val delayHideSetting = 3 * 60 * 1000L
     private var errorRunnable: Runnable? = null
+    private var loadingTimeoutRunnable: Runnable? = null
 
     private var doubleBackToExitPressedOnce = false
 
@@ -199,6 +200,7 @@ class MainActivity : AppCompatActivity() {
                         SP.defaultLike && viewModel.groupModel.positionValue == 0
 
                     viewModel.updateEPG()
+                    hideAllPopups()
                     hideFragment(loadingFragment)
                 }
             }
@@ -252,6 +254,7 @@ class MainActivity : AppCompatActivity() {
                 lastTVModel?.errInfo?.removeObservers(this)
                 lastTVModel?.ready?.removeObservers(this)
                 lastTVModel = it
+                stopLoadingTimeout()
 
                 // Observe error info for the current channel
                 it.errInfo.observe(this) { err ->
@@ -259,6 +262,7 @@ class MainActivity : AppCompatActivity() {
                         hideFragment(loadingFragment)
                         if (err == "") {
                             Log.i(TAG, "${it.tv.title} playing")
+                            stopLoadingTimeout()
                             errorRunnable?.let { handler.removeCallbacks(it) }
                             errorRunnable = null
                             errorFragment.stopCountdown()
@@ -266,6 +270,7 @@ class MainActivity : AppCompatActivity() {
                             showFragment(playerFragment, PlayerFragment.TAG)
                         } else {
                             Log.i(TAG, "${it.tv.title} $err")
+                            stopLoadingTimeout()
                             // Delay showing error fragment to avoid flicker during retry
                             errorRunnable?.let { handler.removeCallbacks(it) }
                             val newErrorRunnable = Runnable {
@@ -287,6 +292,9 @@ class MainActivity : AppCompatActivity() {
                 it.ready.observe(this) { ready ->
                     if (ready != null) {
                         Log.i(TAG, "${it.tv.title} 嘗試播放")
+                        if (loadingTimeoutRunnable == null) {
+                            startLoadingTimeout(it)
+                        }
                         hideFragment(errorFragment)
                         
                         // Ensure playerFragment is showing before calling play
@@ -615,6 +623,18 @@ class MainActivity : AppCompatActivity() {
         showTimeFragment()
     }
 
+    /**
+     * 隐藏所有侧边弹窗（菜单、节目单、设置）
+     */
+    fun hideAllPopups() {
+        hideFragment(menuFragment)
+        hideFragment(programFragment)
+        hideFragment(settingFragment)
+        handler.removeCallbacks(hideMenu)
+        handler.removeCallbacks(hideSetting)
+        showTimeFragment()
+    }
+
     fun showTimeFragment() {
         if (SP.time) {
             showFragment(timeFragment, TimeFragment.TAG)
@@ -904,7 +924,26 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopLoadingTimeout()
         server?.stop()
+    }
+
+    private fun startLoadingTimeout(tvModel: TVModel) {
+        stopLoadingTimeout()
+        Log.i(TAG, "${tvModel.tv.title} 開始加載計時")
+        val runnable = Runnable {
+            Log.w(TAG, "${tvModel.tv.title} 加載超時")
+            tvModel.setErrInfo(R.string.play_error.getString())
+        }
+        loadingTimeoutRunnable = runnable
+        handler.postDelayed(runnable, 5000)
+    }
+
+    private fun stopLoadingTimeout() {
+        loadingTimeoutRunnable?.let {
+            handler.removeCallbacks(it)
+        }
+        loadingTimeoutRunnable = null
     }
 
     override fun attachBaseContext(base: Context) {

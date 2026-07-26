@@ -21,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import com.lizongying.mytv0.ModalFragment.Companion.KEY_URL
 import com.lizongying.mytv0.SimpleServer.Companion.PORT
 import com.lizongying.mytv0.databinding.SettingBinding
+import com.lizongying.mytv3.MyTVApplication
 import kotlin.math.max
 import kotlin.math.min
 import kotlinx.coroutines.launch

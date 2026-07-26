@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
 import com.lizongying.mytv0.databinding.ErrorBinding
+import com.lizongying.mytv3.MyTVApplication
 
 class ErrorFragment : Fragment() {
     private var _binding: ErrorBinding? = null
@@ -66,7 +67,7 @@ class ErrorFragment : Fragment() {
         // Stop any existing countdown first
         stopCountdown()
         
-        countdownSeconds = 5
+        countdownSeconds = 3
         binding.countdown.text = "${countdownSeconds}秒后自动换台"
         
         autoSkipRunnable = object : Runnable {

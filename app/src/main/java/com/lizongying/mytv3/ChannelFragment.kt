@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.lizongying.mytv0.databinding.ChannelBinding
 import com.lizongying.mytv0.models.TVModel
+import com.lizongying.mytv3.MyTVApplication
 
 class ChannelFragment : Fragment() {
     private var _binding: ChannelBinding? = null

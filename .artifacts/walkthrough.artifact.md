@@ -1,32 +1,45 @@
-# 频道 Logo 解析优化与 UI 布局调整说明
+# 软件重命名完成总结
 
-本次更新优化了频道 Logo 的匹配逻辑，精简了错误日志，并调整了切换频道时底部信息悬浮窗的布局。
+## 修改内容
 
-## 主要变更
+### 1. 应用名称（简体统一）
+- **从**: `我的電視·〇` / `我的電視·3`（繁体）
+- **改为**: `我的电视·3`（简体）
 
-### 1. 频道 Logo 名称匹配优化
-- **智能切分**：在根据频道名称匹配 Logo 文件（如备用 Gitee 库）时，系统现在会自动按空格切分名称并仅取第一部分。
-    - *示例*：`"CCTV-16 奥运 4K"` 将自动匹配为 `"CCTV-16.png"`。
-- **涉及文件**：
-    - [MainViewModel.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv0/MainViewModel.kt)
-    - [ImageHelper.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv0/ImageHelper.kt)
+### 2. 包名和应用ID
+- **从**: `com.lizongying.mytv0`
+- **改为**: `com.lizongying.mytv3`
 
-### 2. 日志精简
-- **去除堆栈**：在图片下载或加载失败时，仅打印错误简述（如 `HTTP 404` 或 `Timeout`），不再输出冗长的异常堆栈信息（Stack Trace），使 Logcat 日志更加整洁。
+### 3. 目录结构
+- **从**: `app/src/main/java/com/lizongying/mytv0/`
+- **改为**: `app/src/main/java/com/lizongying/mytv3/`
 
-### 3. 悬浮信息窗 UI 调整
-- **序号右移**：将原本位于最左侧的频道序号（Channel Number）移到了最右侧。
-- **视觉优化**：同步调换了左侧和右侧容器的圆角背景（`rounded_dark_left` 与 `rounded_dark_right`），确保视觉上的圆滑过渡依然自然。
-- **涉及文件**：
-    - [info.xml](file:///Users/itest/Code/my-tv-0/app/src/main/res/layout/info.xml)
+## 修改文件清单
 
-## 验证结果
+| 文件 | 修改内容 |
+|------|----------|
+| `app/src/main/res/values/strings.xml` | `app_name` 改为 `我的电视·3` |
+| `app/src/main/res/values-zh-rTW/strings.xml` | `app_name` 改为 `我的电视·3`（简体） |
+| `app/src/main/res/raw/index.html` | 所有标题和JavaScript中的appName改为简体 |
+| `app/build.gradle.kts` | `namespace` 和 `applicationId` 改为 `com.lizongying.mytv3` |
+| `app/src/main/AndroidManifest.xml` | banner 改为 `@drawable/logo0` |
+| `app/src/main/res/layout/menu.xml` | 左侧菜单顶部添加应用名称文本标题 |
+| `app/src/main/res/layout/setting.xml` | 右侧设置菜单应用名称加大字号(24sp)并居中 |
+| `README.md` | 标题改为简体 `我的电视·3` |
 
-- **编译状态**：`./gradlew app:assembleDebug` 已成功通过。
-- **逻辑验证**：
-    - `substringBefore(" ")` 逻辑已正确应用。
-    - `Log.e` 调用的 Throwable 参数已移除。
-- **布局验证**：`info.xml` 中的子元素顺序已更新，且背景资源匹配正确。
+## Kotlin文件批量修改
+- 所有 `.kt` 文件的 `package` 声明从 `com.lizongying.mytv0` 改为 `com.lizongying.mytv3`
+- 所有 `.kt` 文件的 `import` 语句从 `com.lizongying.mytv0` 改为 `com.lizongying.mytv3`
 
-> [!TIP]
-> 如果部分频道的 Logo 仍然不显示，请确认 Logo 库中是否存在以“切分后第一部分名称”命名的 PNG 文件。
+## UI改进
+1. **左侧菜单**：在频道列表顶部添加了文本标题"我的电视·3"，使用20sp加粗白色字体
+2. **右侧设置菜单**：将应用名称从18sp增加到24sp，并改为居中对齐，使其作为标题更加醒目
+3. **移除了banner图片引用**：AndroidManifest.xml中的banner从banner0.png改为logo0.png
+
+## 构建验证
+✅ `./gradlew assembleDebug` 构建成功
+
+## 注意事项
+- 所有中文名称已统一为简体字
+- 包名修改涉及所有Kotlin源文件，已通过sed批量替换完成
+- 目录重命名通过git mv完成，保留了文件历史

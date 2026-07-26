@@ -15,6 +15,7 @@ import com.lizongying.mytv0.databinding.InfoBinding
 import com.lizongying.mytv0.models.TVModel
 import com.lizongying.mytv0.data.EPG
 import MainViewModel
+import com.lizongying.mytv3.MyTVApplication
 
 
 class InfoFragment : Fragment() {

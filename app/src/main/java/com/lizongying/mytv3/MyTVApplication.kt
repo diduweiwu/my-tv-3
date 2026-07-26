@@ -1,4 +1,4 @@
-package com.lizongying.mytv0
+package com.lizongying.mytv3
 
 import android.app.Application
 import android.content.Context
@@ -10,6 +10,8 @@ import android.os.Looper
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import android.widget.Toast
+import com.lizongying.mytv0.ImageHelper
+import com.lizongying.mytv0.MyTVExceptionHandler
 import java.util.Locale
 
 class MyTVApplication : Application() {
@@ -35,7 +37,7 @@ class MyTVApplication : Application() {
     private var density = 2.0f
     private var scale = 1.0f
 
-    lateinit var imageHelper:ImageHelper
+    lateinit var imageHelper: ImageHelper
 
     override fun onCreate() {
         super.onCreate()
@@ -43,7 +45,7 @@ class MyTVApplication : Application() {
 
         displayMetrics = DisplayMetrics()
         realDisplayMetrics = DisplayMetrics()
-        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         windowManager.defaultDisplay.getMetrics(displayMetrics)
         windowManager.defaultDisplay.getRealMetrics(realDisplayMetrics)
 

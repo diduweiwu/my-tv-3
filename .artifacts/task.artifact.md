@@ -1,7 +1,9 @@
-- [x] 优化频道名称解析与日志
-    - [x] 修改 `MainViewModel.kt`：名称按空格切分，精简错误日志
-    - [x] 修改 `ImageHelper.kt`：名称按空格切分，精简错误日志
-- [x] 调整 `InfoFragment` UI 布局
-    - [x] 修改 `info.xml`：调换频道序号位置至最右侧，更新圆角背景
-- [x] 验证功能与 UI
-- [x] 生成变更演示文档 (walkthrough)
+- [x] Implement 5-second loading timeout in `MainActivity.kt`
+    - [x] Add `loadingTimeoutRunnable` property
+    - [x] Add `startLoadingTimeout` and `stopLoadingTimeout` methods
+    - [x] Integrate with `currentTVModel` and `errInfo` observers
+    - [x] Clean up in `onDestroy`
+- [x] Optimize timeout logic
+    - [x] Prevent timer reset on retries
+    - [x] Reduce error countdown from 5s to 3s
+- [x] Verify implementation

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lizongying.mytv0.data.EPG
 import com.lizongying.mytv0.databinding.ProgramItemBinding
+import com.lizongying.mytv3.MyTVApplication
 
 
 class ProgramAdapter(

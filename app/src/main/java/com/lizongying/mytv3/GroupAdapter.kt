@@ -2,7 +2,6 @@ package com.lizongying.mytv0
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lizongying.mytv0.databinding.GroupItemBinding
 import com.lizongying.mytv0.models.TVGroupModel
 import com.lizongying.mytv0.models.TVListModel
+import com.lizongying.mytv3.MyTVApplication
 
 
 class GroupAdapter(

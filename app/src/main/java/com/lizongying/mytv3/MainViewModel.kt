@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.JsonSyntaxException
 import com.lizongying.mytv0.ImageHelper
-import com.lizongying.mytv0.MyTVApplication
+import com.lizongying.mytv3.MyTVApplication
 import com.lizongying.mytv0.R
 import com.lizongying.mytv0.SP
 import com.lizongying.mytv0.safeSetValue
@@ -169,6 +169,11 @@ class MainViewModel : ViewModel() {
             R.string.channel_read_error.showToast()
         }
 
+        // 启动时立即加载EPG，加快速度
+        viewModelScope.launch {
+            updateEPG()
+        }
+
         viewModelScope.launch {
             cacheEPG = File(appDirectory, CACHE_EPG)
             if (!cacheEPG.exists()) {
@@ -262,7 +267,10 @@ class MainViewModel : ViewModel() {
 
                     for ((n, epg) in res) {
                         val epgName = n.lowercase()
-                        if (name == epgName || name.contains(epgName) || epgName.contains(name)) {
+                        val normalizedChannel = normalizeChannelName(name)
+                        val normalizedEpg = normalizeChannelName(epgName)
+
+                        if (isChannelMatch(normalizedChannel, normalizedEpg)) {
                             m.setEpg(epg)
                             e1[name] = epg
                             break
@@ -679,5 +687,32 @@ class MainViewModel : ViewModel() {
         const val CACHE_FILE_NAME = "channels.txt"
         const val CACHE_EPG = "epg.xml"
         val DEFAULT_CHANNELS_FILE = R.raw.channels
+
+        /**
+         * 标准化频道名称：移除空格、横杠、下划线，统一小写
+         */
+        fun normalizeChannelName(name: String): String {
+            return name.lowercase()
+                .replace(Regex("[\\s\\-_]"), "")
+        }
+
+        /**
+         * 判断频道名是否匹配EPG名称
+         * 使用分级匹配策略，避免短名称误匹配长名称（如 cctv1 误匹配 cctv13）
+         */
+        fun isChannelMatch(channel: String, epg: String): Boolean {
+            // 精确匹配
+            if (channel == epg) return true
+
+            // 前缀匹配：频道名以EPG名开头，且EPG名至少4字符
+            // 例如：cctv1hd 匹配 cctv1（cctv1是前缀）
+            if (channel.startsWith(epg) && epg.length >= 4) return true
+
+            // 前缀匹配：EPG名以频道名开头，且频道名至少4字符
+            // 例如：湖南卫视 匹配 湖南（湖南是前缀）
+            if (epg.startsWith(channel) && channel.length >= 4) return true
+
+            return false
+        }
     }
 }

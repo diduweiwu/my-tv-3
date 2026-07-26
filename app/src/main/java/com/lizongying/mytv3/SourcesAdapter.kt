@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lizongying.mytv0.databinding.SourcesItemBinding
 import com.lizongying.mytv0.models.Sources
-import java.util.Locale
+import com.lizongying.mytv3.MyTVApplication
 
 
 class SourcesAdapter(

@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lizongying.mytv0.databinding.ListItemBinding
 import com.lizongying.mytv0.models.TVListModel
 import com.lizongying.mytv0.models.TVModel
+import com.lizongying.mytv3.MyTVApplication
 
 
 class ListAdapter(

@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.lizongying.mytv0.databinding.LoadingBinding
+import com.lizongying.mytv3.MyTVApplication
 
 class LoadingFragment : Fragment() {
     private var _binding: LoadingBinding? = null
