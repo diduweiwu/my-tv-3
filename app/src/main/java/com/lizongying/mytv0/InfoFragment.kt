@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.lizongying.mytv0.databinding.InfoBinding
 import com.lizongying.mytv0.models.TVModel
+import com.lizongying.mytv0.data.EPG
 import MainViewModel
 
 
@@ -82,6 +83,14 @@ class InfoFragment : Fragment() {
             binding.techInfo.text = info
         }
 
+        viewModel.currentTVModel.observe(viewLifecycleOwner) { tvModel ->
+            tvModel?.epg?.observe(viewLifecycleOwner) { epg ->
+                if (_binding != null && view.visibility == View.VISIBLE) {
+                    updateEpg(epg)
+                }
+            }
+        }
+
         (activity as MainActivity).ready(TAG)
     }
 
@@ -112,7 +121,14 @@ class InfoFragment : Fragment() {
             }
         }
 
-        val epg = tvModel.epg.value
+        updateEpg(tvModel.epg.value)
+
+        handler.removeCallbacks(removeRunnable)
+        view?.visibility = View.VISIBLE
+        handler.postDelayed(removeRunnable, delay)
+    }
+
+    private fun updateEpg(epg: List<EPG>?) {
         val now = Utils.getDateTimestamp()
         val currentEpg = epg?.find { it.beginTime <= now && it.endTime > now }
             ?: epg?.filter { it.beginTime < now }?.maxByOrNull { it.beginTime }
@@ -135,10 +151,6 @@ class InfoFragment : Fragment() {
             binding.desc.text = "正在播放：精彩節目"
             binding.descNext.visibility = View.GONE
         }
-
-        handler.removeCallbacks(removeRunnable)
-        view?.visibility = View.VISIBLE
-        handler.postDelayed(removeRunnable, delay)
     }
 
     override fun onResume() {

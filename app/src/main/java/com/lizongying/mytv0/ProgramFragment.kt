@@ -45,6 +45,14 @@ class ProgramFragment : Fragment(), ProgramAdapter.ItemListener {
             binding.list.background?.alpha = alpha
         }
 
+        viewModel.currentTVModel.observe(viewLifecycleOwner) { tvModel ->
+            tvModel?.epg?.observe(viewLifecycleOwner) { _ ->
+                if (_binding != null && isVisible) {
+                    onVisible()
+                }
+            }
+        }
+
         onVisible()
     }
 

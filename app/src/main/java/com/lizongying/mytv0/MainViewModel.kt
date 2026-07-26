@@ -261,7 +261,8 @@ class MainViewModel : ViewModel() {
                     }
 
                     for ((n, epg) in res) {
-                        if (name.contains(n, ignoreCase = true)) {
+                        val epgName = n.lowercase()
+                        if (name == epgName || name.contains(epgName) || epgName.contains(name)) {
                             m.setEpg(epg)
                             e1[name] = epg
                             break
