@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.lizongying.mytv0.SP
+import com.lizongying.mytv0.safeSetValue
 
 class TVGroupModel : ViewModel() {
     var version = 0
@@ -23,7 +24,7 @@ class TVGroupModel : ViewModel() {
         get() = _position.value ?: 0
 
     fun setPosition(position: Int) {
-        _position.value = position
+        _position.safeSetValue(position)
     }
 
     private val _positionPlaying = MutableLiveData<Int>()
@@ -33,7 +34,7 @@ class TVGroupModel : ViewModel() {
         get() = _positionPlaying.value ?: DEFAULT_POSITION_PLAYING
 
     fun setPositionPlaying(position: Int) {
-        _positionPlaying.value = position
+        _positionPlaying.safeSetValue(position)
         SP.positionGroup = position
     }
 
@@ -46,18 +47,18 @@ class TVGroupModel : ViewModel() {
         get() = _change
 
     fun setChange() {
-        _change.value = version
+        _change.safeSetValue(version)
         version++
     }
 
     fun setTVListModelList(tvGroup: List<TVListModel>) {
-        _tvGroup.value = tvGroup
+        _tvGroup.safeSetValue(tvGroup)
     }
 
     fun addTVListModel(listTVModel: TVListModel) {
-        _tvGroup.value = tvGroupValue.toMutableList().apply {
+        _tvGroup.safeSetValue(tvGroupValue.toMutableList().apply {
             add(listTVModel)
-        }
+        })
     }
 
     fun getTVListModel(): TVListModel? {
@@ -199,10 +200,14 @@ class TVGroupModel : ViewModel() {
     }
 
     fun initTVGroup() {
-        _tvGroup.value = mutableListOf(
+        if (tvGroupValue.size < 2) {
+            Log.e(TAG, "initTVGroup error: tvGroupValue.size < 2")
+            return
+        }
+        _tvGroup.safeSetValue(mutableListOf(
             tvGroupValue[0],
             tvGroupValue[1]
-        )
+        ))
         tvGroupValue[1].initTVList()
     }
 

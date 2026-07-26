@@ -30,12 +30,14 @@ class LoadingFragment : Fragment() {
     }
 
     fun showProgress(text: String) {
-        binding.statusText.text = text
-        binding.bar.show()
+        _binding?.let {
+            it.statusText.text = text
+            it.bar.show()
+        }
     }
 
     fun hideProgress() {
-        binding.bar.hide()
+        _binding?.bar?.hide()
     }
 
     override fun onDestroyView() {

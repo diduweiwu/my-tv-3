@@ -11,6 +11,7 @@ import com.lizongying.mytv0.ImageHelper
 import com.lizongying.mytv0.MyTVApplication
 import com.lizongying.mytv0.R
 import com.lizongying.mytv0.SP
+import com.lizongying.mytv0.safeSetValue
 import com.lizongying.mytv0.Utils.getDateFormat
 import com.lizongying.mytv0.Utils.getUrls
 import com.lizongying.mytv0.bodyAlias
@@ -66,7 +67,7 @@ class MainViewModel : ViewModel() {
         get() = _currentTVModel
 
     fun setCurrentTVModel(tvModel: TVModel?) {
-        _currentTVModel.value = tvModel
+        _currentTVModel.safeSetValue(tvModel)
     }
 
     private val _uiAlpha = MutableLiveData<Int>(SP.uiAlpha)
@@ -74,7 +75,7 @@ class MainViewModel : ViewModel() {
         get() = _uiAlpha
 
     fun updateUIAlpha() {
-        _uiAlpha.value = SP.uiAlpha
+        _uiAlpha.safeSetValue(SP.uiAlpha)
     }
 
     private val _videoFormatInfo = MutableLiveData<String>()
@@ -82,7 +83,7 @@ class MainViewModel : ViewModel() {
         get() = _videoFormatInfo
 
     fun setVideoFormatInfo(info: String) {
-        _videoFormatInfo.value = info
+        _videoFormatInfo.safeSetValue(info)
     }
 
     private val _importProgress = MutableLiveData<Int?>()
@@ -90,7 +91,7 @@ class MainViewModel : ViewModel() {
         get() = _importProgress
 
     fun setImportProgress(progress: Int?) {
-        _importProgress.value = progress
+        _importProgress.safeSetValue(progress)
     }
 
     fun setDisplaySeconds(displaySeconds: Boolean) {
@@ -184,7 +185,7 @@ class MainViewModel : ViewModel() {
 
         initialized = true
 
-        _channelsOk.value = true
+        _channelsOk.safeSetValue(true)
     }
 
     suspend fun preloadLogo() {
@@ -438,7 +439,7 @@ class MainViewModel : ViewModel() {
                         source
                     )
                 }
-                _channelsOk.value = true
+                _channelsOk.safeSetValue(true)
                 R.string.channel_import_success.showToast()
                 Log.i(TAG, "channel import success")
             } else {

@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.lifecycle.viewModelScope
 import com.lizongying.mytv0.data.Global.gson
 import com.lizongying.mytv0.data.Global.typeSourceList
 import com.lizongying.mytv0.data.ReqSettings
@@ -19,7 +20,6 @@ import com.lizongying.mytv0.data.Source
 import fi.iki.elonen.NanoHTTPD
 import io.github.lizongying.Gua
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -150,7 +150,7 @@ class SimpleServer(private val context: Context, private val viewModel: MainView
                     viewModel.sources.addSource(source)
                 }
                 handler.post {
-                    GlobalScope.launch {
+                    viewModel.viewModelScope.launch {
                         try {
                             viewModel.importFromUri(uri, req.id)
                             Log.i(TAG, "handleImportUri: import completed")

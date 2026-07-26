@@ -1,0 +1,6 @@
+- [x] Add `safeSetValue` utility in `Ext.kt`
+- [x] Update `TVGroupModel.kt` to use `safeSetValue` and add safety checks
+- [x] Update `TVListModel.kt` to use `safeSetValue`
+- [x] Update `TVModel.kt` to use `safeSetValue`
+- [x] Update `MainViewModel.kt` to use `safeSetValue`
+- [x] Verify build and fix any regressions

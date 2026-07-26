@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.lizongying.mytv0.SP
+import com.lizongying.mytv0.safeSetValue
 
 class TVListModel(private val name: String, private val groupIndex: Int) : ViewModel() {
     var version = 0
@@ -43,7 +44,7 @@ class TVListModel(private val name: String, private val groupIndex: Int) : ViewM
         get() = _position.value ?: 0
 
     fun setPosition(position: Int) {
-        _position.value = position
+        _position.safeSetValue(position)
     }
 
     private val _positionPlaying = MutableLiveData<Int>()
@@ -53,7 +54,7 @@ class TVListModel(private val name: String, private val groupIndex: Int) : ViewM
         get() = _positionPlaying.value ?: 0
 
     fun setPositionPlaying(position: Int) {
-        _positionPlaying.value = position
+        _positionPlaying.safeSetValue(position)
         SP.position = position
     }
 
@@ -66,19 +67,19 @@ class TVListModel(private val name: String, private val groupIndex: Int) : ViewM
         get() = _change
 
     fun setChange() {
-        _change.value = true
+        _change.safeSetValue(true)
     }
 
     fun setTVListModel(tvList: List<TVModel>) {
-        _tvList.value = tvList
+        _tvList.safeSetValue(tvList)
     }
 
     fun addTVModel(tvModel: TVModel) {
-        _tvList.value = tvListValue.toMutableList().apply {
+        _tvList.safeSetValue(tvListValue.toMutableList().apply {
             add(tvModel)
-        }
+        })
 
-        _added.value = Pair(tvListValue.size - 1, version)
+        _added.safeSetValue(Pair(tvListValue.size - 1, version))
         version++
     }
 
@@ -89,27 +90,27 @@ class TVListModel(private val name: String, private val groupIndex: Int) : ViewM
 
         val index = tvListValue.indexOfFirst { it.tv.id == id }
         if (index != -1) {
-            _tvList.value = tvListValue.toMutableList().apply {
+            _tvList.safeSetValue(tvListValue.toMutableList().apply {
                 removeAt(index)
-            }
+            })
 
-            _removed.value = Pair(index, version)
+            _removed.safeSetValue(Pair(index, version))
             version++
         }
     }
 
     fun replaceTVModel(tvModel: TVModel) {
         if (_tvList.value == null) {
-            _tvList.value = mutableListOf(tvModel)
+            _tvList.safeSetValue(mutableListOf(tvModel))
         }
 
         val index = tvListValue.indexOfFirst { it.tv.id == tvModel.tv.id }
         if (index == -1) {
-            _tvList.value = tvListValue.toMutableList().apply {
+            _tvList.safeSetValue(tvListValue.toMutableList().apply {
                 add(tvModel)
-            }
+            })
 
-            _added.value = Pair(tvListValue.size - 1, version)
+            _added.safeSetValue(Pair(tvListValue.size - 1, version))
             version++
         }
     }
@@ -158,7 +159,7 @@ class TVListModel(private val name: String, private val groupIndex: Int) : ViewM
     }
 
     fun initTVList() {
-        _tvList.value = mutableListOf()
+        _tvList.safeSetValue(mutableListOf())
     }
 
     init {

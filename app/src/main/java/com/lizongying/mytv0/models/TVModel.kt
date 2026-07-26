@@ -16,6 +16,7 @@ import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import com.lizongying.mytv0.SP
+import com.lizongying.mytv0.safeSetValue
 import com.lizongying.mytv0.data.EPG
 import com.lizongying.mytv0.data.SourceType
 import com.lizongying.mytv0.data.TV
@@ -52,7 +53,7 @@ class TVModel(var tv: TV) : ViewModel() {
         get() = _errInfo
 
     fun setErrInfo(info: String) {
-        _errInfo.value = info
+        _errInfo.safeSetValue(info)
     }
 
     private var _epg = MutableLiveData<List<EPG>>()
@@ -62,7 +63,7 @@ class TVModel(var tv: TV) : ViewModel() {
         get() = _epg.value ?: emptyList()
 
     fun setEpg(epg: List<EPG>) {
-        _epg.value = epg
+        _epg.safeSetValue(epg)
     }
 
     private val _videoIndex = MutableLiveData<Int>()
@@ -84,7 +85,7 @@ class TVModel(var tv: TV) : ViewModel() {
         get() = _like
 
     fun setLike(liked: Boolean) {
-        _like.value = liked
+        _like.safeSetValue(liked)
     }
 
     private val _ready = MutableLiveData<Boolean>()
@@ -96,11 +97,11 @@ class TVModel(var tv: TV) : ViewModel() {
             setErrInfo("")
             retryTimes = 0
 
-            _videoIndex.value = max(0, min(tv.uris.size - 1, tv.videoIndex))
+            _videoIndex.safeSetValue(max(0, min(tv.uris.size - 1, tv.videoIndex)))
             sourceTypeIndex =
                 max(0, min(sourceTypeList.size - 1, sourceTypeList.indexOf(tv.sourceType)))
         }
-        _ready.value = true
+        _ready.safeSetValue(true)
     }
 
     private var userAgent = ""
@@ -227,7 +228,7 @@ class TVModel(var tv: TV) : ViewModel() {
             return false
         }
 
-        _videoIndex.value = (videoIndexValue + 1) % tv.uris.size
+        _videoIndex.safeSetValue((videoIndexValue + 1) % tv.uris.size)
         sourceTypeList = listOf(
             SourceType.UNKNOWN,
         )

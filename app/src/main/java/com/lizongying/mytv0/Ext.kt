@@ -8,8 +8,10 @@ import android.content.pm.PackageManager
 import android.content.pm.Signature
 import android.content.pm.SigningInfo
 import android.os.Build
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import androidx.lifecycle.MutableLiveData
 import java.security.MessageDigest
 
 private const val TAG = "Extensions"
@@ -100,4 +102,12 @@ fun String.md5(): String {
     val md = MessageDigest.getInstance("MD5")
     val digest = md.digest(this.toByteArray())
     return digest.joinToString("") { "%02x".format(it) }
+}
+
+fun <T> MutableLiveData<T>.safeSetValue(value: T) {
+    if (Looper.myLooper() == Looper.getMainLooper()) {
+        this.value = value
+    } else {
+        this.postValue(value)
+    }
 }
