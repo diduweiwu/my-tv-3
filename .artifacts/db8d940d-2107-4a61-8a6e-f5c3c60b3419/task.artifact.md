@@ -1,0 +1,9 @@
+- [x] 调整 `info.xml` 布局文件
+    - [x] 将 `info` 容器高度增加到 `110dp`
+    - [x] 添加 `desc_next` TextView 用户展示下一节目
+    - [x] 优化垂直间距
+- [x] 更新 `InfoFragment.kt` 逻辑
+    - [x] 适配 `descNext` 的动态缩放
+    - [x] 实现 EPG 双行逻辑（当前 + 下一节目）
+    - [x] 格式化时间段（HH:mm-HH:mm）
+- [x] 验证 UI 效果

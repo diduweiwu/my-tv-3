@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.marginBottom
-import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
@@ -34,20 +33,14 @@ class InfoFragment : Fragment() {
 
         val application = requireActivity().applicationContext as MyTVApplication
 
-        binding.info.layoutParams.width = application.px2Px(binding.info.layoutParams.width)
+        if (binding.info.layoutParams.width > 0) {
+            binding.info.layoutParams.width = application.px2Px(binding.info.layoutParams.width)
+        }
         binding.info.layoutParams.height = application.px2Px(binding.info.layoutParams.height)
 
         val layoutParams = binding.info.layoutParams as ViewGroup.MarginLayoutParams
         layoutParams.bottomMargin = application.px2Px(binding.info.marginBottom)
         binding.info.layoutParams = layoutParams
-
-        binding.channelNum.layoutParams.width = application.px2Px(binding.channelNum.layoutParams.width)
-        binding.channelNum.layoutParams.height = application.px2Px(binding.channelNum.layoutParams.height)
-
-        val layoutParamsChannelNum = binding.channelNum.layoutParams as ViewGroup.MarginLayoutParams
-        layoutParamsChannelNum.bottomMargin = application.px2Px(binding.channelNum.marginBottom)
-        layoutParamsChannelNum.marginEnd = application.px2Px(binding.channelNum.marginEnd)
-        binding.channelNum.layoutParams = layoutParamsChannelNum
 
         // Logo 宽度由 wrap_content + maxWidth 控制，高度与弹窗一致
         // 只设置水平内边距，垂直方向无内边距以充分利用高度
@@ -67,6 +60,7 @@ class InfoFragment : Fragment() {
 
         binding.title.textSize = application.px2PxFont(binding.title.textSize)
         binding.desc.textSize = application.px2PxFont(binding.desc.textSize)
+        binding.descNext.textSize = application.px2PxFont(binding.descNext.textSize)
 
         binding.container.layoutParams.width = application.shouldWidthPx()
         binding.container.layoutParams.height = application.shouldHeightPx()
@@ -81,9 +75,7 @@ class InfoFragment : Fragment() {
         viewModel = ViewModelProvider(context)[MainViewModel::class.java]
 
         viewModel.uiAlpha.observe(viewLifecycleOwner) { alpha ->
-            binding.logo.background?.alpha = alpha
-            binding.main.background?.alpha = alpha
-            binding.channelNum.background?.alpha = alpha
+            binding.info.background?.alpha = alpha
         }
 
         viewModel.videoFormatInfo.observe(viewLifecycleOwner) { info ->
@@ -109,8 +101,7 @@ class InfoFragment : Fragment() {
         Log.i(TAG, "tv.logo='${tv.logo}', tv.name='${tv.name}', tv.title='${tv.title}'")
 
         val channelNum = if (tv.number == -1) tv.id.plus(1) else tv.number
-        binding.channelNum.text = "%03d".format(channelNum)
-        binding.title.text = tv.title
+        binding.title.text = "${tv.title} - %03d".format(channelNum)
 
         when (tv.title) {
             else -> {
@@ -121,11 +112,28 @@ class InfoFragment : Fragment() {
             }
         }
 
-        val epg = tvModel.epg.value?.filter { it.beginTime < Utils.getDateTimestamp() }
-        if (!epg.isNullOrEmpty()) {
-            binding.desc.text = epg.last().title
+        val epg = tvModel.epg.value
+        val now = Utils.getDateTimestamp()
+        val currentEpg = epg?.find { it.beginTime <= now && it.endTime > now }
+            ?: epg?.filter { it.beginTime < now }?.maxByOrNull { it.beginTime }
+
+        if (currentEpg != null) {
+            val startTime = Utils.getDateFormat("HH:mm", currentEpg.beginTime)
+            val endTime = Utils.getDateFormat("HH:mm", currentEpg.endTime)
+            binding.desc.text = "$startTime-$endTime  正在播放：${currentEpg.title}"
+
+            val nextEpg = epg?.filter { it.beginTime >= currentEpg.endTime }?.minByOrNull { it.beginTime }
+            if (nextEpg != null) {
+                val nextStartTime = Utils.getDateFormat("HH:mm", nextEpg.beginTime)
+                val nextEndTime = Utils.getDateFormat("HH:mm", nextEpg.endTime)
+                binding.descNext.text = "$nextStartTime-$nextEndTime  稍后播放：${nextEpg.title}"
+                binding.descNext.visibility = View.VISIBLE
+            } else {
+                binding.descNext.visibility = View.GONE
+            }
         } else {
-            binding.desc.text = "精彩節目"
+            binding.desc.text = "正在播放：精彩節目"
+            binding.descNext.visibility = View.GONE
         }
 
         handler.removeCallbacks(removeRunnable)
