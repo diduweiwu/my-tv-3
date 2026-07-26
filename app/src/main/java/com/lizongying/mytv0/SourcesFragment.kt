@@ -11,7 +11,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.lizongying.mytv0.databinding.SourcesBinding
 import kotlinx.coroutines.launch
@@ -103,14 +103,12 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
     override fun onItemClicked(position: Int, tag: String) {
         viewModel.sources.getSource(position)?.let {
             val uri = Uri.parse(it.uri)
-            handler.post {
-                lifecycleScope.launch {
-                    viewModel.importFromUri(uri)
-                }
+            viewModel.viewModelScope.launch {
+                viewModel.importFromUri(uri, it.id ?: "")
             }
         }
 
-        handler.postDelayed(hideFragment, 0)
+        dismiss()
     }
 
     override fun onKey(keyCode: Int, tag: String): Boolean {

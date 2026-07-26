@@ -8,8 +8,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.marginBottom
 import androidx.core.view.marginEnd
-import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.lizongying.mytv0.databinding.ChannelBinding
@@ -39,7 +39,7 @@ class ChannelFragment : Fragment() {
         binding.channel.layoutParams.height = application.px2Px(binding.channel.layoutParams.height)
 
         val layoutParams = binding.channel.layoutParams as ViewGroup.MarginLayoutParams
-        layoutParams.topMargin = application.px2Px(binding.channel.marginTop)
+        layoutParams.bottomMargin = application.px2Px(binding.channel.marginBottom)
         layoutParams.marginEnd = application.px2Px(binding.channel.marginEnd)
         binding.channel.layoutParams = layoutParams
 

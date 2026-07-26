@@ -12,41 +12,18 @@
 
         <LinearLayout
             android:id="@+id/info"
-            android:layout_width="480dp"
+            android:layout_width="400dp"
             android:layout_height="80dp"
             android:layout_gravity="center_horizontal|bottom"
             android:layout_marginBottom="20dp"
             android:orientation="horizontal">
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/channel_num"
-                android:layout_width="80dp"
-                android:layout_height="match_parent"
-                android:background="@drawable/rounded_dark_left"
-                android:gravity="center"
-                android:textColor="@color/title_blur"
-                android:textSize="32sp"
-                android:textStyle="bold"
-                tools:text="001" />
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/logo"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:adjustViewBounds="true"
-                android:background="@color/blur"
-                android:maxWidth="400px"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:paddingTop="0dp"
-                android:paddingBottom="0dp" />
 
             <LinearLayout
                 android:id="@+id/main"
                 android:layout_width="320dp"
                 android:layout_height="match_parent"
                 android:layout_marginStart="0dp"
-                android:background="@drawable/rounded_dark_right"
+                android:background="@drawable/rounded_dark_left"
                 android:gravity="start|center_vertical"
                 android:orientation="vertical"
                 android:padding="7dp">
@@ -92,6 +69,33 @@
                 <!-- logo_url removed -->
 
             </LinearLayout>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/logo"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:adjustViewBounds="true"
+                android:background="@drawable/rounded_dark_right"
+                android:maxWidth="400px"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="0dp"
+                android:paddingBottom="0dp" />
+
         </LinearLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/channel_num"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginBottom="20dp"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/rounded_dark"
+            android:gravity="center"
+            android:textColor="@color/title_blur"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            tools:text="001" />
     </FrameLayout>
 </LinearLayout>

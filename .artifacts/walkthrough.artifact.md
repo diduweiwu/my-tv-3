@@ -1,72 +1,32 @@
-# 修复完成：`/api/sources` 接口卡住 + App 端视频源弹窗为空
+# 频道 Logo 解析优化与 UI 布局调整说明
 
-## 问题 1：`/api/sources` 接口卡住
+本次更新优化了频道 Logo 的匹配逻辑，精简了错误日志，并调整了切换频道时底部信息悬浮窗的布局。
 
-Web 端加载 `/api/sources` 接口时一直卡住，一段时间后失败 `net::ERR_Empty_response`。
+## 主要变更
 
-### 根本原因
-1. `handleSources()` 方法从 GitHub 获取 `sources.txt` 文件
-2. `getUrls()` 返回了 **13 个镜像 URL**，会依次尝试
-3. `HttpClient` 没有配置任何超时时间
-4. `runBlocking(Dispatchers.IO)` 阻塞了服务器线程
+### 1. 频道 Logo 名称匹配优化
+- **智能切分**：在根据频道名称匹配 Logo 文件（如备用 Gitee 库）时，系统现在会自动按空格切分名称并仅取第一部分。
+    - *示例*：`"CCTV-16 奥运 4K"` 将自动匹配为 `"CCTV-16.png"`。
+- **涉及文件**：
+    - [MainViewModel.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv0/MainViewModel.kt)
+    - [ImageHelper.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv0/ImageHelper.kt)
 
-### 修复内容
-**文件**：`app/src/main/java/com/lizongying/mytv0/SimpleServer.kt`
+### 2. 日志精简
+- **去除堆栈**：在图片下载或加载失败时，仅打印错误简述（如 `HTTP 404` 或 `Timeout`），不再输出冗长的异常堆栈信息（Stack Trace），使 Logcat 日志更加整洁。
 
-- 去掉了 `fetchSources()` 方法和远程 GitHub 加载逻辑
-- 直接读取本地 `R.raw.sources` 资源文件返回
-- 删除了未使用的导入（`Gua`、`coroutines`、`HttpClient` 等）
+### 3. 悬浮信息窗 UI 调整
+- **序号右移**：将原本位于最左侧的频道序号（Channel Number）移到了最右侧。
+- **视觉优化**：同步调换了左侧和右侧容器的圆角背景（`rounded_dark_left` 与 `rounded_dark_right`），确保视觉上的圆滑过渡依然自然。
+- **涉及文件**：
+    - [info.xml](file:///Users/itest/Code/my-tv-0/app/src/main/res/layout/info.xml)
 
----
+## 验证结果
 
-## 问题 2：App 端视频源弹窗为空
+- **编译状态**：`./gradlew app:assembleDebug` 已成功通过。
+- **逻辑验证**：
+    - `substringBefore(" ")` 逻辑已正确应用。
+    - `Log.e` 调用的 Throwable 参数已移除。
+- **布局验证**：`info.xml` 中的子元素顺序已更新，且背景资源匹配正确。
 
-Web 端添加视频源后，`SP.sources` 有数据，但 App 端打开视频源弹窗时列表为空。
-
-### 根本原因
-- Web 端 `/api/settings` 接口的 `history` 字段数据从 `SP.sources` 读取
-- App 端视频源弹窗使用 `viewModel.sources`（`Sources` 类型），其 `init()` 只在对象创建时执行一次
-- 如果 `MainViewModel` 创建时 `SP.sources` 为空，后续 Web 添加源后更新了 `SP.sources`，但 App 端弹窗可能未正确同步
-
-### 修复内容
-
-**文件 1**：`app/src/main/java/com/lizongying/mytv0/models/Sources.kt`
-
-添加 `reload()` 方法：
-```kotlin
-fun reload() {
-    init()
-}
-```
-
-**文件 2**：`app/src/main/java/com/lizongying/mytv0/SourcesFragment.kt`
-
-在 `onViewCreated` 方法中，打开弹窗时调用 `reload()` 确保数据最新：
-```kotlin
-override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    super.onViewCreated(view, savedInstanceState)
-
-    viewModel = ViewModelProvider(requireActivity())[MainViewModel::class.java]
-
-    // 重新加载视频源数据，确保显示最新数据（与 Web 端 /api/settings 的 history 字段一致）
-    viewModel.sources.reload()
-
-    // ... 其余代码不变
-}
-```
-
----
-
-## 效果
-
-- ✅ `/api/sources` 接口现在**立即响应**，不再依赖 GitHub 远程加载
-- ✅ App 端视频源弹窗与 Web 端 `/api/settings` 的 `history` 字段数据一致
-- ✅ 打开弹窗时自动从 `SP.sources` 重新加载最新数据
-- ✅ 构建成功，无语法错误
-
-## 验证
-
-1. 编译项目：✅ 构建成功
-2. 部署到设备后，Web 端访问 `http://localhost:34567/api/sources` 可立即获取视频源列表
-3. 通过 Web 端添加视频源，然后打开 App 端视频源弹窗，确认列表正常显示
-4. App 端视频源列表与 Web 端 `history` 字段完全一致（都从 `SP.sources` 读取）
+> [!TIP]
+> 如果部分频道的 Logo 仍然不显示，请确认 Logo 库中是否存在以“切分后第一部分名称”命名的 PNG 文件。

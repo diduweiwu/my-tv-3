@@ -203,6 +203,7 @@ class MainViewModel : ViewModel() {
             if (name.isEmpty()) {
                 name = tvModel.tv.title
             }
+            name = name.substringBefore(" ")
             val url = tvModel.tv.logo
 
             // 构建 URL 列表：优先 tvg-logo，其次 gitee 备用
@@ -237,7 +238,7 @@ class MainViewModel : ViewModel() {
                         url,
                     )
                 } catch (e: Exception) {
-                    Log.e(TAG, "preloadLogo failed: $name", e)
+                    Log.e(TAG, "preloadLogo failed: $name, error: ${e.message}")
                 } finally {
                     semaphore.release()
                 }

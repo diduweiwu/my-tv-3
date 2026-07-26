@@ -57,7 +57,7 @@ class ImageHelper(private val context: Context) {
                     true
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "downloadImage error $url", e)
+                Log.e(TAG, "downloadImage error $url, ${e.message}")
                 false
             }
         }
@@ -69,10 +69,11 @@ class ImageHelper(private val context: Context) {
         logoUrl: String = "",
     ) {
         // 计算与 loadImage() 相同的缓存 key
+        val processedKey = key.substringBefore(" ")
         val logoFileName = if (logoUrl.isNotEmpty()) {
             logoUrl.substringAfterLast("/")
         } else {
-            "${key.uppercase()}.png"
+            "${processedKey.uppercase()}.png"
         }
         val cacheKey = "gitee_$logoFileName"
 
@@ -124,12 +125,13 @@ class ImageHelper(private val context: Context) {
         Glide.with(context).clear(imageView)
 
         // 从 tvg-logo URL 中截取文件名（如 CCTV17.png）
+        val processedKey = key.substringBefore(" ")
         val logoFileName = if (logoUrl.isNotEmpty()) {
             val name = logoUrl.substringAfterLast("/")
             Log.i(TAG, "extracted logoFileName from logoUrl: $name")
             name
         } else {
-            val name = "${key.uppercase()}.png"
+            val name = "${processedKey.uppercase()}.png"
             Log.i(TAG, "using key as logoFileName: $name")
             name
         }
@@ -147,7 +149,7 @@ class ImageHelper(private val context: Context) {
                     .fitCenter()
                     .into(imageView)
             } catch (e: Exception) {
-                Log.e(TAG, "cache load failed", e)
+                Log.e(TAG, "cache load failed, ${e.message}")
                 imageView.setImageDrawable(null)
             }
         } else {

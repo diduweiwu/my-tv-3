@@ -1,0 +1,6 @@
+- `[x]` Create `rounded_dark.xml` drawable
+- `[x]` Modify `info.xml` to separate channel number
+- `[x]` Modify `channel.xml` to move typing indicator to bottom-right
+- `[x]` Update `InfoFragment.kt` logic
+- `[x]` Update `ChannelFragment.kt` logic
+- `[x]` Verify changes

@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.marginBottom
+import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
@@ -39,6 +40,14 @@ class InfoFragment : Fragment() {
         val layoutParams = binding.info.layoutParams as ViewGroup.MarginLayoutParams
         layoutParams.bottomMargin = application.px2Px(binding.info.marginBottom)
         binding.info.layoutParams = layoutParams
+
+        binding.channelNum.layoutParams.width = application.px2Px(binding.channelNum.layoutParams.width)
+        binding.channelNum.layoutParams.height = application.px2Px(binding.channelNum.layoutParams.height)
+
+        val layoutParamsChannelNum = binding.channelNum.layoutParams as ViewGroup.MarginLayoutParams
+        layoutParamsChannelNum.bottomMargin = application.px2Px(binding.channelNum.marginBottom)
+        layoutParamsChannelNum.marginEnd = application.px2Px(binding.channelNum.marginEnd)
+        binding.channelNum.layoutParams = layoutParamsChannelNum
 
         // Logo 宽度由 wrap_content + maxWidth 控制，高度与弹窗一致
         // 只设置水平内边距，垂直方向无内边距以充分利用高度
@@ -74,6 +83,7 @@ class InfoFragment : Fragment() {
         viewModel.uiAlpha.observe(viewLifecycleOwner) { alpha ->
             binding.logo.background?.alpha = alpha
             binding.main.background?.alpha = alpha
+            binding.channelNum.background?.alpha = alpha
         }
 
         viewModel.videoFormatInfo.observe(viewLifecycleOwner) { info ->
