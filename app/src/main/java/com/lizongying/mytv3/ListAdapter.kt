@@ -107,9 +107,15 @@ class ListAdapter(
                 listener?.onItemFocusChange(tvModel, hasFocus)
 
                 if (hasFocus) {
-                    viewHolder.focus(true)
-                    focused = view
+                    val oldActivePosition = activePosition
                     activePosition = position
+                    viewHolder.focus(true, true)
+                    focused = view
+
+                    if (oldActivePosition != -1 && oldActivePosition != activePosition) {
+                        notifyItemChanged(oldActivePosition)
+                    }
+
                     if (visible) {
                         if (position != it.positionValue) {
                             it.setPosition(position)
@@ -120,7 +126,7 @@ class ListAdapter(
                     // Ensure the item is visible during fast scrolling
                     recyclerView.scrollToPosition(position)
                 } else {
-                    viewHolder.focus(false)
+                    viewHolder.focus(false, position == activePosition)
                 }
             }
 
@@ -220,7 +226,7 @@ class ListAdapter(
 
             viewHolder.bindImage(tvModel)
 
-            viewHolder.focus(view.hasFocus())
+            viewHolder.focus(view.hasFocus(), position == activePosition)
         }
     }
 
@@ -276,10 +282,13 @@ class ListAdapter(
             imageHelper.loadImage(name, binding.icon, tv.logo)
         }
 
-        fun focus(hasFocus: Boolean) {
+        fun focus(hasFocus: Boolean, isActive: Boolean = false) {
             if (hasFocus) {
                 binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
                 binding.root.setBackgroundResource(R.color.focus)
+            } else if (isActive) {
+                binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
+                binding.root.setBackgroundResource(R.color.track_checked)
             } else {
                 binding.title.setTextColor(ContextCompat.getColor(context, R.color.title_blur))
                 binding.root.setBackgroundResource(0)

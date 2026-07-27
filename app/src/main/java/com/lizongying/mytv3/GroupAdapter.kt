@@ -84,9 +84,14 @@ class GroupAdapter(
             listener?.onItemFocusChange(listTVModel, hasFocus)
 
             if (hasFocus) {
-                viewHolder.focus(true)
-                focused = view
+                val oldActivePosition = activePosition
                 activePosition = position
+                viewHolder.focus(true, true)
+                focused = view
+
+                if (oldActivePosition != -1 && oldActivePosition != activePosition) {
+                    notifyItemChanged(oldActivePosition)
+                }
 
                 val p = listTVModel.getGroupIndex()
                 if (p != tvGroupModel.positionValue) {
@@ -96,7 +101,7 @@ class GroupAdapter(
                 // Ensure the item is visible during fast scrolling
                 recyclerView.scrollToPosition(position)
             } else {
-                viewHolder.focus(false)
+                viewHolder.focus(false, position == activePosition)
             }
         }
 
@@ -170,7 +175,7 @@ class GroupAdapter(
         }
 
         viewHolder.bindTitle(listTVModel.getName())
-        viewHolder.focus(view.hasFocus())
+        viewHolder.focus(view.hasFocus(), position == activePosition)
     }
 
     override fun getItemCount() = tvGroupModel.size()
@@ -185,10 +190,13 @@ class GroupAdapter(
             }
         }
 
-        fun focus(hasFocus: Boolean) {
+        fun focus(hasFocus: Boolean, isActive: Boolean = false) {
             if (hasFocus) {
                 binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
                 binding.root.setBackgroundResource(R.color.focus)
+            } else if (isActive) {
+                binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
+                binding.root.setBackgroundResource(R.color.track_checked)
             } else {
                 binding.title.setTextColor(
                     ContextCompat.getColor(
