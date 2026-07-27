@@ -67,7 +67,7 @@ object SP {
     const val DEFAULT_CHANNEL_NUM = false
     const val DEFAULT_TIME = true
     const val DEFAULT_BOOT_STARTUP = false
-    const val DEFAULT_CONFIG_URL = "https://v4.gh-proxy.org/https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u"
+    const val DEFAULT_CONFIG_URL = "https://v4.gh-proxy.org/https://raw.githubusercontent.com/jia070310/lemonTV/refs/heads/main/iptv-fe.m3u"
     const val DEFAULT_PROXY = ""
     const val DEFAULT_EPG =
         "https://gh-proxy.org/https://raw.githubusercontent.com/mytv-android/myEPG/refs/heads/master/output/epg.xml"
