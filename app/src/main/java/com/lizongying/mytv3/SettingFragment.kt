@@ -229,7 +229,8 @@ class SettingFragment : Fragment() {
         binding.name.textSize = titleSize
         binding.versionName.textSize = versionNameSize
 
-        binding.uaDisplay.text = SP.ua ?: "Linux-6"
+        val uaValue = SP.ua ?: "Linux-6"
+        binding.sectionRemoteConfig.text = "${getString(R.string.server)}($uaValue)"
 
         updateManager = UpdateManager(context, context.appVersionCode)
 

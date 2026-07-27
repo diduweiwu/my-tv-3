@@ -59,6 +59,7 @@
 
             <!-- Section: Remote Config -->
             <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/section_remote_config"
                 style="@style/SettingHeader"
                 android:text="@string/server" />
 
@@ -81,15 +82,7 @@
                     android:text="@string/channels" />
             </LinearLayout>
 
-            <!-- UA Display (moved from header) -->
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/ua_display"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:text=""
-                android:textColor="@color/description_blur"
-                android:textSize="10sp" />
+
 
             <!-- Section: Playback -->
             <androidx.appcompat.widget.AppCompatTextView
