@@ -20,3 +20,4 @@ app/release/
 .README.md
 .artifacts
 .android
+keystore.properties

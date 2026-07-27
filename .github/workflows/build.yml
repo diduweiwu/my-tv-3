@@ -23,6 +23,20 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Decode keystore
+        run: |
+          mkdir -p ~/.android
+          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > ~/.android/release.keystore
+
+      - name: Write keystore.properties
+        run: |
+          cat > keystore.properties << EOF
+          storeFile=/home/runner/.android/release.keystore
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KEYSTORE_ALIAS }}
+          keyPassword=${{ secrets.ALIAS_PASSWORD }}
+          EOF
+
       - name: Build release APKs
         run: ./gradlew assembleRelease
 
@@ -36,17 +50,6 @@ jobs:
           fi
           echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
           echo "Universal APK found: $APK"
-
-      - name: Sign APK
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          alias: ${{ secrets.ALIAS }}
-          signingKeyBase64: ${{ secrets.KEYSTORE }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ALIAS_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
 
       - name: Get changelog
         id: get_changelog
