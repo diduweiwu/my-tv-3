@@ -37,9 +37,9 @@ android {
                 keyPassword = props["keyPassword"] as String
             } else {
                 storeFile = file(System.getProperty("user.home") + "/.android/release.keystore")
-                storePassword = "android"
-                keyAlias = "mytv3"
-                keyPassword = "android"
+                storePassword = System.getenv("STORE_PASSWORD") ?: "android"
+                keyAlias = System.getenv("KEY_ALIAS") ?: "mytv3"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
             }
         }
     }
