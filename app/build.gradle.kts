@@ -38,7 +38,7 @@ android {
             } else {
                 storeFile = file(System.getProperty("user.home") + "/.android/release.keystore")
                 storePassword = "android"
-                keyAlias = "androiddebugkey"
+                keyAlias = "mytv3"
                 keyPassword = "android"
             }
         }

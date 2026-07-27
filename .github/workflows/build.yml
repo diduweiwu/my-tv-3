@@ -37,11 +37,11 @@ jobs:
 
       - name: Write keystore.properties
         run: |
-          cat > keystore.properties << EOF
+          cat > app/keystore.properties << EOF
           storeFile=/home/runner/.android/release.keystore
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           keyAlias=${{ secrets.KEYSTORE_ALIAS }}
-          keyPassword=${{ secrets.ALIAS_PASSWORD }}
+          keyPassword=${{ secrets.KEYSTORE_PASSWORD }}
           EOF
 
       - name: Build release APKs
