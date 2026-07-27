@@ -1,24 +1,24 @@
-name: 需求建議
-description: 一個新的功能需求或建議
+name: 需求建议
+description: 一个新的功能需求或建议
 labels: [ "enhancement" ]
 title: "[FR] "
 body:
   - type: checkboxes
     id: checklist
     attributes:
-      label: 提需求前請檢查
-      description: 確認新功能尚未被提出
+      label: 提需求前请检查
+      description: 确认新功能尚未被提出
       options:
-        - label: 已檢查過需求列表，沒有人提過相同需求
+        - label: 已检查过需求列表，没有人提过相同需求
           required: true
 
   - type: textarea
     id: solution
     attributes:
-      label: 需求建議
-      description: 需求需要單一且具體，請不要提諸如“優化界面”、“改善穩定性”這樣模糊的需求
+      label: 需求建议
+      description: 需求需要单一且具体，请不要提诸如“优化界面”、“改善稳定性”这样模糊的需求
       placeholder: |
         1. 功能需求
-        2. 實現方案
+        2. 实现方案
     validations:
       required: true

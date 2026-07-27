@@ -188,16 +188,16 @@ class MainActivity : AppCompatActivity() {
                             SP.channel = 0
                             0
                         }
-                        Log.i(TAG, "播放默認頻道")
+                        Log.i(TAG, "播放默认频道")
                         viewModel.groupModel.getPosition(position)
                     } else {
-                        Log.i(TAG, "播放上次頻道")
+                        Log.i(TAG, "播放上次频道")
                         viewModel.groupModel.getCurrent()
                     }
                     viewModel.groupModel.setPositionPlaying()
                     viewModel.groupModel.getCurrentList()
                         ?.let {
-                            Log.i(TAG, "當前組 ${it.getName()}")
+                            Log.i(TAG, "当前组 ${it.getName()}")
                             it.setPositionPlaying()
                         }
                     viewModel.setCurrentTVModel(tvModel)
@@ -291,8 +291,15 @@ class MainActivity : AppCompatActivity() {
                                 hideFragment(playerFragment)
                                 errorFragment.setMsg(err)
                                 showFragment(errorFragment, ErrorFragment.TAG)
-                                errorFragment.view?.post {
-                                    errorFragment.view?.requestFocus()
+
+                                if (isAnyMenuVisible()) {
+                                    if (menuFragment.isAdded && !menuFragment.isHidden) menuFragment.view?.bringToFront()
+                                    if (settingFragment.isAdded && !settingFragment.isHidden) settingFragment.view?.bringToFront()
+                                    if (programFragment.isAdded && !programFragment.isHidden) programFragment.view?.bringToFront()
+                                } else {
+                                    errorFragment.view?.post {
+                                        errorFragment.view?.requestFocus()
+                                    }
                                 }
                             }
                             errorRunnable = newErrorRunnable
@@ -1002,9 +1009,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun startLoadingTimeout(tvModel: TVModel) {
         stopLoadingTimeout()
-        Log.i(TAG, "${tvModel.tv.title} 開始加載計時")
+        Log.i(TAG, "${tvModel.tv.title} 开始加载计时")
         val runnable = Runnable {
-            Log.w(TAG, "${tvModel.tv.title} 加載超時")
+            Log.w(TAG, "${tvModel.tv.title} 加载超时")
             tvModel.setErrInfo(R.string.play_error.getString())
         }
         loadingTimeoutRunnable = runnable

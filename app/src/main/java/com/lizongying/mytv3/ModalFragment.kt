@@ -98,8 +98,8 @@ class ModalFragment : DialogFragment() {
                 }
             }
         } else {
-            val drawableId = arguments?.getInt(KEY_DRAWABLE_ID)
-            if (drawableId == R.drawable.appreciate) {
+            val drawableId = arguments?.getInt(KEY_DRAWABLE_ID, 0) ?: 0
+            if (drawableId == ID_APPRECIATE) {
                 // 赞赏弹窗：并排展示两张收款码
                 val displayMetrics = resources.displayMetrics
                 val screenHeight = displayMetrics.heightPixels
@@ -123,7 +123,7 @@ class ModalFragment : DialogFragment() {
                     .into(binding.modalImageRight)
                 binding.modalImageContainer.visibility = View.VISIBLE
                 binding.modalText.visibility = View.GONE
-            } else if (drawableId != null) {
+            } else if (drawableId != 0) {
                 Glide.with(requireContext())
                     .load(drawableId)
                     .into(binding.modalImage)
@@ -156,5 +156,6 @@ class ModalFragment : DialogFragment() {
         const val KEY_DRAWABLE_ID = "drawable_id"
         const val KEY_URL = "url"
         const val TAG = "ModalFragment"
+        const val ID_APPRECIATE = -1
     }
 }

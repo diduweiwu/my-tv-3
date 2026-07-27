@@ -1,30 +1,30 @@
-name: 問題反饋
-description: 使用過程中遇到的錯誤或不合理功能
+name: 问题反馈
+description: 使用过程中遇到的错误或不合理功能
 labels: [ "bug" ]
 title: "[BUG] "
 body:
   - type: checkboxes
     id: checklist
     attributes:
-      label: 提問題前請檢查
-      description: 確認問題依然存在
+      label: 提问题前请检查
+      description: 确认问题依然存在
       options:
-        - label: 已檢查過問題列表，沒有人提過相同問題
+        - label: 已检查过问题列表，没有人提过相同问题
           required: true
-        - label: 軟件的最新版本依然沒有被修復
+        - label: 软件的最新版本依然没有被修复
           required: true
 
   - type: input
     id: version
     attributes:
-      label: 軟件版本
+      label: 软件版本
     validations:
       required: true
 
   - type: input
     id: device
     attributes:
-      label: 電視品牌
+      label: 电视品牌
     validations:
       required: true
 
@@ -38,12 +38,12 @@ body:
   - type: textarea
     id: bug
     attributes:
-      label: 問題描述
-      description: 請描述下問題的具體細節
+      label: 问题描述
+      description: 请描述下问题的具体细节
       placeholder: |
-        1. 錯誤表現
-        2. 如何復現
-        3. 想法建議
+        1. 错误表现
+        2. 如何复现
+        3. 想法建议
     validations:
       required: true
 

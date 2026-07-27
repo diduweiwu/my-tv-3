@@ -1,0 +1,2 @@
+- [x] Modify `MainActivity.kt` to prevent `ErrorFragment` from stealing focus when menus are visible
+- [x] Verify build with `./gradlew :app:assembleDebug`

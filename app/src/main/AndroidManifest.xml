@@ -7,7 +7,7 @@
     <application
         android:name="com.lizongying.mytv3.MyTVApplication"
         android:allowBackup="true"
-        android:banner="@drawable/logo0"
+        android:banner="@drawable/banner0"
         android:icon="@drawable/logo0"
         android:label="@string/app_name"
         android:largeHeap="true"

@@ -180,7 +180,7 @@ class SettingFragment : Fragment() {
             val imageModalFragment = ModalFragment()
 
             val args = Bundle()
-            args.putInt(ModalFragment.KEY_DRAWABLE_ID, R.drawable.appreciate)
+            args.putInt(ModalFragment.KEY_DRAWABLE_ID, ModalFragment.ID_APPRECIATE)
             imageModalFragment.arguments = args
 
             imageModalFragment.show(requireFragmentManager(), ModalFragment.TAG)

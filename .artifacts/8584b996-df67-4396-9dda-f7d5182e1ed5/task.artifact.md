@@ -1,0 +1,1 @@
+- `[x]` Update `AndroidManifest.xml` to use `@drawable/banner0` for `android:banner`
