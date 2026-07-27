@@ -84,6 +84,7 @@ class GroupAdapter(
             if (hasFocus) {
                 viewHolder.focus(true)
                 focused = view
+                activePosition = position
 
                 val p = listTVModel.getGroupIndex()
                 if (p != tvGroupModel.positionValue) {
@@ -132,9 +133,18 @@ class GroupAdapter(
 
                     recyclerView.postDelayed({
                         val v = recyclerView.findViewHolderForAdapterPosition(p)
-                        v?.itemView?.isSelected = true
-                        v?.itemView?.requestFocus()
-                    }, 0)
+                        if (v != null) {
+                            v.itemView.isSelected = true
+                            v.itemView.requestFocus()
+                        } else {
+                            recyclerView.postDelayed({
+                                recyclerView.findViewHolderForAdapterPosition(p)?.itemView?.apply {
+                                    isSelected = true
+                                    requestFocus()
+                                }
+                            }, 50)
+                        }
+                    }, 50)
                 }
 
                 // If it is the last item and you continue to move down...
@@ -148,9 +158,18 @@ class GroupAdapter(
 
                     recyclerView.postDelayed({
                         val v = recyclerView.findViewHolderForAdapterPosition(p)
-                        v?.itemView?.isSelected = true
-                        v?.itemView?.requestFocus()
-                    }, 0)
+                        if (v != null) {
+                            v.itemView.isSelected = true
+                            v.itemView.requestFocus()
+                        } else {
+                            recyclerView.postDelayed({
+                                recyclerView.findViewHolderForAdapterPosition(p)?.itemView?.apply {
+                                    isSelected = true
+                                    requestFocus()
+                                }
+                            }, 50)
+                        }
+                    }, 50)
                 }
 
                 return@setOnKeyListener listener?.onKey(keyCode) ?: false
@@ -199,10 +218,10 @@ class GroupAdapter(
         val layoutManager = recyclerView.layoutManager as? LinearLayoutManager
         layoutManager?.let {
             val delay = if (first) {
+                first = false
                 100L
             } else {
-                first = false
-                0
+                50L
             }
 
             recyclerView.postDelayed({
@@ -210,11 +229,24 @@ class GroupAdapter(
                     if (SP.showAllChannels || position == 0) position else position - 1
                 it.scrollToPositionWithOffset(groupPosition, 0)
 
-                val viewHolder = recyclerView.findViewHolderForAdapterPosition(groupPosition)
-                viewHolder?.itemView?.apply {
-                    isSelected = true
-                    requestFocus()
-                }
+                recyclerView.postDelayed({
+                    val viewHolder = recyclerView.findViewHolderForAdapterPosition(groupPosition)
+                    if (viewHolder != null) {
+                        viewHolder.itemView.apply {
+                            isSelected = true
+                            requestFocus()
+                        }
+                    } else {
+                        // Try one more time
+                        recyclerView.postDelayed({
+                            val vh = recyclerView.findViewHolderForAdapterPosition(groupPosition)
+                            vh?.itemView?.apply {
+                                isSelected = true
+                                requestFocus()
+                            }
+                        }, 50)
+                    }
+                }, 50)
             }, delay)
         }
     }

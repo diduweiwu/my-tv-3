@@ -161,9 +161,18 @@ class ListAdapter(
 
                         recyclerView.postDelayed({
                             val v = recyclerView.findViewHolderForAdapterPosition(p)
-                            v?.itemView?.isSelected = true
-                            v?.itemView?.requestFocus()
-                        }, 0)
+                            if (v != null) {
+                                v.itemView.isSelected = true
+                                v.itemView.requestFocus()
+                            } else {
+                                recyclerView.postDelayed({
+                                    recyclerView.findViewHolderForAdapterPosition(p)?.itemView?.apply {
+                                        isSelected = true
+                                        requestFocus()
+                                    }
+                                }, 50)
+                            }
+                        }, 50)
                     }
 
                     if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && position == getItemCount() - 1) {
@@ -176,9 +185,18 @@ class ListAdapter(
 
                         recyclerView.postDelayed({
                             val v = recyclerView.findViewHolderForAdapterPosition(p)
-                            v?.itemView?.isSelected = true
-                            v?.itemView?.requestFocus()
-                        }, 0)
+                            if (v != null) {
+                                v.itemView.isSelected = true
+                                v.itemView.requestFocus()
+                            } else {
+                                recyclerView.postDelayed({
+                                    recyclerView.findViewHolderForAdapterPosition(p)?.itemView?.apply {
+                                        isSelected = true
+                                        requestFocus()
+                                    }
+                                }, 50)
+                            }
+                        }, 50)
                     }
 
                     if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
@@ -280,18 +298,29 @@ class ListAdapter(
     }
 
     fun toPosition(position: Int) {
-        Log.i(TAG, "position $position")
+        Log.i(TAG, "toPosition $position")
         recyclerView.post {
-            (recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
-                position,
-                0
-            )
+            val layoutManager = recyclerView.layoutManager as? LinearLayoutManager
+            layoutManager?.scrollToPositionWithOffset(position, 0)
 
             recyclerView.postDelayed({
                 val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)
-                viewHolder?.itemView?.isSelected = true
-                viewHolder?.itemView?.requestFocus()
-            }, 0)
+                if (viewHolder != null) {
+                    viewHolder.itemView.apply {
+                        isSelected = true
+                        requestFocus()
+                    }
+                } else {
+                    // Try one more time if not found
+                    recyclerView.postDelayed({
+                        val vh = recyclerView.findViewHolderForAdapterPosition(position)
+                        vh?.itemView?.apply {
+                            isSelected = true
+                            requestFocus()
+                        }
+                    }, 50)
+                }
+            }, 50)
         }
     }
 

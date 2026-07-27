@@ -18,7 +18,6 @@ import com.lizongying.mytv0.data.ReqSources
 import com.lizongying.mytv0.data.RespSettings
 import com.lizongying.mytv0.data.Source
 import fi.iki.elonen.NanoHTTPD
-import io.github.lizongying.Gua
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -108,8 +107,8 @@ class SimpleServer(private val context: Context, private val viewModel: MainView
 
         return newFixedLengthResponse(
             Response.Status.OK,
-            "application/json",
-            Gua().decode(response)
+            "text/plain",
+            response
         )
     }
 

@@ -7,7 +7,6 @@ import android.util.Log
 import com.lizongying.mytv0.data.Global.gson
 import com.lizongying.mytv0.data.Global.typeSourceList
 import com.lizongying.mytv0.data.Source
-import io.github.lizongying.Gua
 
 object SP {
     private const val TAG = "SP"
@@ -68,7 +67,7 @@ object SP {
     const val DEFAULT_CHANNEL_NUM = false
     const val DEFAULT_TIME = true
     const val DEFAULT_BOOT_STARTUP = false
-    const val DEFAULT_CONFIG_URL = ""
+    const val DEFAULT_CONFIG_URL = "https://v4.gh-proxy.org/https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u"
     const val DEFAULT_PROXY = ""
     const val DEFAULT_EPG =
         "https://gh-proxy.org/https://raw.githubusercontent.com/mytv-android/myEPG/refs/heads/master/output/epg.xml"
@@ -86,7 +85,7 @@ object SP {
     const val DEFAULT_POSITION_GROUP = 1
     const val DEFAULT_POSITION = 0
     const val DEFAULT_REPEAT_INFO = true
-    const val DEFAULT_CONFIG_AUTO_LOAD = false
+    const val DEFAULT_CONFIG_AUTO_LOAD = true
     var DEFAULT_SOURCES = ""
 
     private lateinit var sp: SharedPreferences
@@ -106,7 +105,7 @@ object SP {
                 if (str.isNotEmpty()) {
                     try {
                         DEFAULT_SOURCES = gson.toJson(
-                            Gua().decode(str).trim().split("\n").map { i ->
+                            str.trim().split("\n").map { i ->
                                 Source(
                                     uri = i
                                 )

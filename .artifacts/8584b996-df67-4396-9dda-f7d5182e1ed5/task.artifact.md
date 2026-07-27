@@ -1,1 +1,4 @@
-- `[x]` Update `AndroidManifest.xml` to use `@drawable/banner0` for `android:banner`
+- `[x]` Define `ensureZOrder()` in `MainActivity` to manage fragment layers
+- `[x]` Update `showFragment` and `hideFragment` to maintain Z-order
+- `[x]` Fix error handling block in `MainActivity` to restore focus to menus
+- `[ ]` Verify the fix by simulating playback errors while menu is open

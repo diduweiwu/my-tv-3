@@ -293,9 +293,8 @@ class MainActivity : AppCompatActivity() {
                                 showFragment(errorFragment, ErrorFragment.TAG)
 
                                 if (isAnyMenuVisible()) {
-                                    if (menuFragment.isAdded && !menuFragment.isHidden) menuFragment.view?.bringToFront()
-                                    if (settingFragment.isAdded && !settingFragment.isHidden) settingFragment.view?.bringToFront()
-                                    if (programFragment.isAdded && !programFragment.isHidden) programFragment.view?.bringToFront()
+                                    ensureZOrder()
+                                    restoreMenuFocus()
                                 } else {
                                     errorFragment.view?.post {
                                         errorFragment.view?.requestFocus()
@@ -583,21 +582,21 @@ class MainActivity : AppCompatActivity() {
         if (!fragment.isAdded) {
             supportFragmentManager.beginTransaction()
                 .add(R.id.main_browse_fragment, fragment, tag)
-                .commitAllowingStateLoss()
+                .commitNowAllowingStateLoss()
+            ensureZOrder()
             return
         }
 
         if (!fragment.isHidden) {
+            ensureZOrder()
             return
         }
 
         supportFragmentManager.beginTransaction()
             .show(fragment)
-            .commitAllowingStateLoss()
+            .commitNowAllowingStateLoss()
 
-        if (fragment !== playerFragment) {
-            fragment.view?.bringToFront()
-        }
+        ensureZOrder()
     }
 
     private fun hideFragment(fragment: Fragment) {
@@ -611,7 +610,36 @@ class MainActivity : AppCompatActivity() {
 
         supportFragmentManager.beginTransaction()
             .hide(fragment)
-            .commitAllowingStateLoss()
+            .commitNowAllowingStateLoss()
+    }
+
+    private fun ensureZOrder() {
+        val fragments = listOf(
+            playerFragment,
+            errorFragment,
+            loadingFragment,
+            infoFragment,
+            channelFragment,
+            timeFragment,
+            menuFragment,
+            settingFragment,
+            programFragment
+        )
+        fragments.forEach {
+            if (it.isAdded && !it.isHidden) {
+                it.view?.bringToFront()
+            }
+        }
+    }
+
+    private fun restoreMenuFocus() {
+        if (menuFragment.isAdded && !menuFragment.isHidden) {
+            menuFragment.view?.post { menuFragment.view?.requestFocus() }
+        } else if (settingFragment.isAdded && !settingFragment.isHidden) {
+            settingFragment.view?.post { settingFragment.view?.requestFocus() }
+        } else if (programFragment.isAdded && !programFragment.isHidden) {
+            programFragment.view?.post { programFragment.view?.requestFocus() }
+        }
     }
 
     fun menuActive() {

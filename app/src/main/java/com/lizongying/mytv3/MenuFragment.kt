@@ -224,6 +224,9 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
                 listAdapter.focusable(true)
 
                 // Refresh group list to show active highlight
+                val position = viewModel.groupModel.positionValue
+                groupAdapter.activePosition =
+                    if (SP.showAllChannels || position == 0) position else position - 1
                 groupAdapter.notifyDataSetChanged()
 
                 if (viewModel.groupModel.positionPlayingValue == viewModel.groupModel.positionValue) {
@@ -278,12 +281,14 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         ) {
             updateList(position)
         }
-        groupAdapter.activePosition = position
+
+        val adapterPosition = if (SP.showAllChannels || position == 0) position else position - 1
+        groupAdapter.activePosition = adapterPosition
         groupAdapter.notifyDataSetChanged()
 
         // Scroll group list to active position but don't force focus on it
         (binding.group.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
-            position,
+            adapterPosition,
             0
         )
 

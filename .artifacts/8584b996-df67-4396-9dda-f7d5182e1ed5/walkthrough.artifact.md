@@ -1,27 +1,42 @@
-# Walkthrough - Configure Android TV Banner
+# Walkthrough - Fixed UI Overlap and Focus during Playback Error
 
-I have updated the application banner for Android TV to use `banner0.png`.
+I have fixed the issue where the user interface would become unresponsive or hidden when a playback error occurred while the channel list (menu) was open.
 
 ## Changes
 
-### Android Manifest
+### MainActivity
+I implemented a robust Z-order management system and focus restoration logic in [MainActivity.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/MainActivity.kt).
 
-I modified [AndroidManifest.xml](file:///Users/itest/Code/my-tv-0/app/src/main/AndroidManifest.xml) to point the `android:banner` attribute to `@drawable/banner0`.
+1.  **Centralized Z-Order Management**: Added `ensureZOrder()` to explicitly define the stacking order of fragments. Menus are always placed at the top layer.
+2.  **Synchronous Fragment Transactions**: Updated `showFragment` to use `commitNowAllowingStateLoss()` ensuring immediate attachment and layer adjustment.
+3.  **Focus Restoration**: Added `restoreMenuFocus()` to ensure that if a menu was active when an error occurred, the focus is immediately returned to it so the user can continue navigating.
+4.  **Error Handling Update**: Modified the error observer to call `ensureZOrder()` and `restoreMenuFocus()` when a menu is visible.
 
-```diff
---- /Users/itest/Code/my-tv-0/app/src/main/AndroidManifest.xml
-+++ /Users/itest/Code/my-tv-0/app/src/main/AndroidManifest.xml
-@@ -7,7,7,7,7 @@
-     <application
-         android:name="com.lizongying.mytv3.MyTVApplication"
-         android:allowBackup="true"
--        android:banner="@drawable/logo0"
-+        android:banner="@drawable/banner0"
-         android:icon="@drawable/logo0"
-         android:label="@string/app_name"
+```kotlin
+    private fun ensureZOrder() {
+        val fragments = listOf(
+            playerFragment,
+            errorFragment,
+            loadingFragment,
+            infoFragment,
+            channelFragment,
+            timeFragment,
+            menuFragment,
+            settingFragment,
+            programFragment
+        )
+        fragments.forEach {
+            if (it.isAdded && !it.isHidden) {
+                it.view?.bringToFront()
+            }
+        }
+    }
 ```
 
 ## Verification Results
 
-### Manual Verification
-- Verified that `AndroidManifest.xml` now correctly references `@drawable/banner0` for the banner.
+### Build Verification
+- Successfully compiled the project with `:app:assembleDebug`.
+
+### Logical Verification
+- The layer management ensures that `ErrorFragment` (with its black background) is placed behind active menus, preventing it from obscuring the channel list or stealing focus.

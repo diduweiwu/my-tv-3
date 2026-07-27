@@ -30,7 +30,6 @@ import com.lizongying.mytv0.requests.HttpClient
 import com.lizongying.mytv0.safeSetValue
 import com.lizongying.mytv0.showToast
 import com.lizongying.mytv3.MyTVApplication
-import io.github.lizongying.Gua
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -488,11 +487,6 @@ class MainViewModel : ViewModel() {
             return true
         }
 
-        val g = Gua()
-        if (g.verify(str)) {
-            string = g.decode(str)
-        }
-
         if (string.isEmpty()) {
             Log.w(TAG, "channels is empty")
             return false
@@ -686,7 +680,7 @@ class MainViewModel : ViewModel() {
         // 全部频道
         groupModel.tvGroupValue[1].setTVListModel(listModel)
 
-        if (string != cacheChannels && g.encode(string) != cacheChannels) {
+        if (string != cacheChannels) {
             groupModel.initPosition()
         }
 

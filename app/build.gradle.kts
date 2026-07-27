@@ -122,7 +122,6 @@ dependencies {
     implementation(libs.media3.datasource.rtmp)
 
     implementation(libs.nanohttpd)
-    implementation(libs.gua64)
     implementation(libs.zxing)
     implementation(libs.glide)
 
