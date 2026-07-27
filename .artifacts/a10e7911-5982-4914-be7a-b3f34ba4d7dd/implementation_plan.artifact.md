@@ -1,34 +1,35 @@
-# Bug Fix Plan: Group Sync and Highlight Visibility
+# Implementation Plan - Fix Channel List Positioning and Highlight
 
-This plan addresses two bugs in the channel list (MenuFragment):
-1.  **Group Sync Bug:** The group list does not correctly reset to the current channel's group upon re-entering the menu if the user previously navigated to another group.
-2.  **Highlight Visibility Bug:** When navigating long lists, the selected item sometimes remains out of view or the focus request fails due to timing issues.
+This plan addresses the issue where the channel list (right side) does not correctly position or highlight the currently playing channel when re-opening the menu.
 
 ## Proposed Changes
 
-### 1. Group Sync Fix
+### 1. Enhanced Highlighting in ListAdapter
 
-The `onVisible` method in `MenuFragment.kt` currently uses raw group indices from the ViewModel directly with the RecyclerView, which fails when the "All Channels" group is filtered out (when `SP.showAllChannels` is false). We need to map the raw index to the adapter position.
-
-#### [MODIFY] [MenuFragment.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/MenuFragment.kt)
-- Update `onVisible()` to correctly calculate the adapter position for the group list.
-- Use a helper method or consistent logic for this mapping.
-
-### 2. Highlight Visibility and Focus Reliability Fix
-
-The focus request after scrolling often fails because the target item hasn't been laid out yet. We will improve this by adding a small delay or retrying.
+Currently, `ListAdapter` only shows a highlight when it has focus. We will add an `activePosition` field to track the "currently playing" or "last selected" channel, allowing it to remain highlighted even when the focus is on the group list.
 
 #### [MODIFY] [ListAdapter.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/ListAdapter.kt)
-- Increase the delay in `toPosition()` to ensure the item is laid out.
-- Alternatively, implement a listener or a more robust focus-after-scroll mechanism.
+- Add `var activePosition: Int = -1`.
+- Update `ViewHolder.focus(hasFocus: Boolean, isActive: Boolean = false)` to support an active background color (consistent with `GroupAdapter`).
+- Update `onBindViewHolder` to use `activePosition` for highlighting.
+- Update `onFocusChangeListener` to set `activePosition = position`.
+- Improve `toPosition(position: Int)` to update `activePosition` and use more robust `postDelayed` logic for focus.
+- Update `update(listTVModel: TVListModel)` to initialize `activePosition` from `listTVModel.positionPlayingValue`.
+
+### 2. Synchronization in MenuFragment
+
+#### [MODIFY] [MenuFragment.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/MenuFragment.kt)
+- In `onVisible()`, explicitly set `listAdapter.activePosition` before calling `toPosition()`.
+- Ensure `updateList()` correctly propagates the active position to the adapter.
+
+### 3. Reliability Fixes in GroupAdapter
 
 #### [MODIFY] [GroupAdapter.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/GroupAdapter.kt)
-- Improve `scrollToPositionAndSelect()` reliability.
-- Fix potential off-by-one errors in group position mapping.
+- Ensure `activePosition` is always updated on focus change.
 
 ## Verification Plan
 
 ### Manual Verification
-- **Group Sync:** Open menu, move to a different group, exit menu. Re-open menu and verify it focuses the group of the currently playing channel.
-- **Highlight Visibility:** Scroll down a long channel list (e.g., "All Channels") and verify that when focus is moved to/within the list, the selected item is always visible and correctly highlighted.
-- **Filtering Toggle:** Test with `SP.showAllChannels` both true and false to ensure index mapping works in both cases.
+1.  **Re-entry Test:** Play a channel, open the menu, move focus around, close the menu. Re-open the menu and verify both the group and the channel are correctly positioned and highlighted.
+2.  **Highlight Test:** Verify that when focus is in the group list, the currently playing channel in the right list remains visible with a dim highlight.
+3.  **Focus Test:** Verify that D-pad navigation correctly moves focus and scrolls both lists as expected.

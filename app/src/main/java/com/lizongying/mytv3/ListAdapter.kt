@@ -34,6 +34,8 @@ class ListAdapter(
     private var defaultFocused = false
     private var defaultFocus: Int = -1
 
+    var activePosition: Int = -1
+
     var visible = false
 
     val application = context.applicationContext as MyTVApplication
@@ -69,6 +71,7 @@ class ListAdapter(
 
     fun update(listTVModel: TVListModel) {
         this.listTVModel = listTVModel
+        this.activePosition = listTVModel.positionPlayingValue
         recyclerView.post {
             notifyDataSetChanged()
         }
@@ -106,6 +109,7 @@ class ListAdapter(
                 if (hasFocus) {
                     viewHolder.focus(true)
                     focused = view
+                    activePosition = position
                     if (visible) {
                         if (position != it.positionValue) {
                             it.setPosition(position)
@@ -114,7 +118,7 @@ class ListAdapter(
                         visible = true
                     }
                 } else {
-                    viewHolder.focus(false)
+                    viewHolder.focus(false, position == activePosition)
                 }
             }
 
@@ -213,6 +217,8 @@ class ListAdapter(
             viewHolder.bindTitle(tvModel)
 
             viewHolder.bindImage(tvModel)
+
+            viewHolder.focus(view.hasFocus(), position == activePosition)
         }
     }
 
@@ -268,13 +274,18 @@ class ListAdapter(
             imageHelper.loadImage(name, binding.icon, tv.logo)
         }
 
-        fun focus(hasFocus: Boolean) {
+        fun focus(hasFocus: Boolean, isActive: Boolean = false) {
             if (hasFocus) {
                 binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
                 binding.root.setBackgroundResource(R.color.focus)
             } else {
-                binding.title.setTextColor(ContextCompat.getColor(context, R.color.title_blur))
-                binding.root.setBackgroundResource(0)
+                if (isActive) {
+                    binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
+                    binding.root.setBackgroundColor(android.graphics.Color.parseColor("#400096A6"))
+                } else {
+                    binding.title.setTextColor(ContextCompat.getColor(context, R.color.title_blur))
+                    binding.root.setBackgroundResource(0)
+                }
             }
         }
 
@@ -299,6 +310,7 @@ class ListAdapter(
 
     fun toPosition(position: Int) {
         Log.i(TAG, "toPosition $position")
+        activePosition = position
         recyclerView.post {
             val layoutManager = recyclerView.layoutManager as? LinearLayoutManager
             layoutManager?.scrollToPositionWithOffset(position, 0)
@@ -318,10 +330,11 @@ class ListAdapter(
                             isSelected = true
                             requestFocus()
                         }
-                    }, 50)
+                    }, 100)
                 }
-            }, 50)
+            }, 100)
         }
+        notifyDataSetChanged()
     }
 
     interface ItemListener {

@@ -1,4 +1,3 @@
-- `[x]` Fix Group Sync issue in `MenuFragment.kt`
-- `[x]` Fix Focus Reliability in `ListAdapter.kt`
-- `[x]` Fix Focus Reliability in `GroupAdapter.kt`
+- `[x]` Fix Channel List Highlight and Positioning in `ListAdapter.kt`
+- `[x]` Update `MenuFragment.kt` for list positioning
 - `[x]` Verify changes

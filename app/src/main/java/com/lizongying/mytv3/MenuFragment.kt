@@ -293,6 +293,7 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
         )
 
         viewModel.groupModel.getCurrentList()?.let {
+            listAdapter.activePosition = it.positionPlayingValue
             listAdapter.toPosition(it.positionPlayingValue)
         }
 
