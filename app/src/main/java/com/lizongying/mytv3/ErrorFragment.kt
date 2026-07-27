@@ -13,6 +13,8 @@ class ErrorFragment : Fragment() {
     private var _binding: ErrorBinding? = null
     private val binding get() = _binding!!
 
+    private var message: String? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -32,11 +34,20 @@ class ErrorFragment : Fragment() {
         binding.msg.textSize = application.px2PxFont(binding.msg.textSize)
 
         binding.root.isFocusable = true
+        binding.root.isFocusableInTouchMode = true
 
         return binding.root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        message?.let {
+            binding.msg.text = it
+        }
+    }
+
     fun setMsg(msg: String) {
+        message = msg
         if (_binding != null) {
             binding.msg.text = msg
         }

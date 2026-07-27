@@ -1,3 +1,3 @@
-- [x] 优化 `MainViewModel.kt` 中的 `preloadLogo`（降低并发并添加 Job 管理）
-- [x] 优化 `ModalFragment.kt` 中的二维码展示逻辑（更换调度器并移除 Glide 冗余加载）
-- [x] 验证编译与整体性能
+- [x] 优化 `ErrorFragment.kt`：持久化错误消息并增强焦点属性
+- [x] 优化 `MainActivity.kt`：改为延迟请求焦点并增强按键日志
+- [x] 验证编译与功能

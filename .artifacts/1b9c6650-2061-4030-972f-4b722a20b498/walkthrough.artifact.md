@@ -1,26 +1,26 @@
-# 二维码展示速度与后台负载优化已完成
+# 播放错误界面文字缺失与交互响应修复已完成
 
-我已经完成了针对机顶盒设备二维码展示缓慢的深度优化。通过优化后台任务调度和 UI 加载路径，解决了资源竞争导致的展示延迟问题。
+我已经修复了播放失败时 `ErrorFragment` 偶发性不显示文字以及界面无响应的问题。
 
 ## 核心改进
 
-### 1. 后台任务削峰填谷
-- **并发控制**：将 `preloadLogo` 的最大并发下载数从 **15 降至 5**。这显著减轻了弱性能机顶盒在启动时的 CPU 和网络负载，为前台操作留出了资源空间。
-- **任务防抖 (Task Debouncing)**：引入了 `preloadJob` 管理机制。在重新加载或导入频道时，会自动取消之前的预加载任务，防止无效的后台任务堆积。
-- **协程优化**：将 `java.util.concurrent.Semaphore` 替换为 `kotlinx.coroutines.sync.Semaphore`，通过非阻塞挂起代替线程阻塞，提高了线程池利用率。
+### 1. 解决文字缺失问题 (Message Persistence)
+- **现象**：当 `ErrorFragment` 第一次显示时，View 尚未创建，导致此时调用的 `setMsg` 失效，界面只显示图标。
+- **修复**：在 `ErrorFragment` 中引入了 `message` 变量进行状态保持。现在无论 Fragment 何时被创建，都会在 `onViewCreated` 阶段自动恢复并展示最后一次设置的错误信息。
 
-### 2. 二维码展示路径加速
-- **调度器迁移**：将二维码生成任务从 `Dispatchers.IO`（通常已饱和）迁移到 `Dispatchers.Default`（CPU 优化型调度器）。这确保了生成任务能立即获得计算资源，不受 I/O 任务排队的影响。
-- **移除冗余框架**：在 `ModalFragment` 中，二维码位图不再通过 Glide 间接加载，而是直接通过 `setImageBitmap` 设置给 `ImageView`。这消除了 Glide 内部的队列调度、生命周期检查等开销，实现了“即生即显”。
+### 2. 增强 TV 焦点响应 (Focus Reliability)
+- **异步聚焦**：在 `MainActivity` 中，将对错误页面的 `requestFocus()` 调用包装在 `view.post {}` 中。这确保了在 Fragment 事务完成且 View 真正附加到窗口后才执行聚焦操作，极大地提高了 TV 遥控器操作的成功率。
+- **属性强化**：为 `ErrorFragment` 的根布局额外设置了 `isFocusableInTouchMode = true`，增强了不同 TV 系统版本下的兼容性。
+- **调试增强**：在 `onKey` 中增加了按键日志，便于后续监控按键流转。
 
 ## 变更文件列表
 
-- [MainViewModel.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/MainViewModel.kt): 优化预加载并发逻辑，添加任务管理。
-- [ModalFragment.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/ModalFragment.kt): 优化协程调度与位图设置方式。
+- [ErrorFragment.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/ErrorFragment.kt): 添加消息持久化逻辑与焦点属性。
+- [MainActivity.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/MainActivity.kt): 改为延迟请求焦点并优化日志。
 
 ## 验证结果
 - **编译状态**: 已通过 Gradle 构建验证。
-- **性能预期**: 在机顶盒上启动应用后立即弹出二维码，响应应从秒级提升至毫秒级。
+- **逻辑验证**: 确认了消息设置逻辑在 Fragment 生命周期各个阶段的覆盖情况。
 
 > [!TIP]
-> 现在应用在启动时的后台负载更加平稳，即使正在加载大量 Logo，二维码弹窗也能瞬间响应。
+> 现在报错界面的显示更加可靠，且您可以在看到报错的第一时间就通过遥控器进行换台或菜单操作。

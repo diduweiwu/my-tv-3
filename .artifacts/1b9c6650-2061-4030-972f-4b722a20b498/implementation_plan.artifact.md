@@ -1,23 +1,32 @@
-# 修复播放错误后换台不显示频道详情的问题
+# 修复播放错误界面文字缺失及交互无响应问题
+
+该计划旨在解决播放失败时 `ErrorFragment` 偶发性文字缺失（只显示图标）以及界面无响应的问题。
 
 ## 问题分析
-在之前的更改中，为了确保错误提示和菜单不被遮挡，我们在 `MainActivity.kt` 的 `showFragment` 方法中增加了 `bringToFront()` 调用。
-然而，当播放出错显示 `ErrorFragment` 后，用户进行换台操作时，`MainActivity` 会重新调用 `showFragment(playerFragment, ...)`。
-这导致基础播放图层 `playerFragment` 被带到了最顶层，从而遮挡了本应在其上方的 `infoFragment`（显示频道详情的悬浮窗）和 `channelFragment`（显示频道数字的悬浮窗）。
+1. **文字缺失**：`ErrorFragment.setMsg()` 在调用时仅尝试更新当前可见的 View。如果 Fragment 尚未添加到 Activity（第一次显示时），其 View 尚未创建，导致设置的错误信息丢失。
+2. **交互无响应**：
+    - 在 `MainActivity` 中，`requestFocus()` 在 `showFragment` 之后立即调用。由于 `FragmentTransaction.commit()` 是异步的，此时 `errorFragment.view` 可能仍为 null。
+    - 当 `playerFragment` 被隐藏时，如果焦点没有成功转移到 `errorFragment`，TV 设备可能因失去焦点而无法响应 D-pad 事件。
+    - `ErrorFragment` 的根布局虽然设置了 `isFocusable`，但未设置 `isFocusableInTouchMode`，在某些 TV 系统上可能影响焦点获取。
 
 ## 拟议变更
 
-### [核心逻辑]
+### [界面组件]
+
+#### [MODIFY] [ErrorFragment.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/ErrorFragment.kt)
+- **持久化消息**：增加一个 `msg` 变量存储错误信息。在 `setMsg` 时保存该值，并在 `onViewCreated` 或 `onCreateView` 中应用，确保文字不会丢失。
+- **增强焦点获取**：设置 `isFocusableInTouchMode = true`。
 
 #### [MODIFY] [MainActivity.kt](file:///Users/itest/Code/my-tv-0/app/src/main/java/com/lizongying/mytv3/MainActivity.kt)
-- 修改 `showFragment` 方法，在调用 `bringToFront()` 时排除 `playerFragment`。
-- 这样可以确保 `playerFragment` 始终作为最底层的背景图层，而 `infoFragment` 和 `channelFragment` 等叠加层能够正常显示在其上方。
+- **延迟聚焦**：在 `errorFragment` 显示后，使用 `post` 任务来请求焦点，确保此时 View 已经创建并附加。
+- **安全检查**：在 `onKey` 中增加更多日志，以便排查按键流转情况。
 
 ## 验证计划
 
-### 手动验证
-1. 制造一个播放错误（如断开网络），确认错误页面显示。
-2. 恢复网络或切换到一个有效的频道。
-3. 确认换台后，屏幕下方能正常显示频道详情悬浮窗（`InfoFragment`）。
-4. 确认在正常播放状态下，按下数字键能正常显示频道数字悬浮窗（`ChannelFragment`）。
-5. 确认菜单和设置界面依然能正常显示在最顶层，不会被背景遮挡。
+### 功能验证
+1. **模拟首次报错**：清理应用缓存或重启应用，触发一个播放错误，确认“播放错误”文字正常显示。
+2. **焦点验证**：在报错页面，确认遥控器方向键能触发 `MainActivity` 的日志，且能正常换台。
+3. **层级验证**：确认在报错页面能正常弹出菜单和设置。
+
+### 鲁棒性验证
+- 连续快速切换频道导致报错，确认不会出现黑屏或完全死锁的情况。

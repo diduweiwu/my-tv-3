@@ -291,7 +291,9 @@ class MainActivity : AppCompatActivity() {
                                 hideFragment(playerFragment)
                                 errorFragment.setMsg(err)
                                 showFragment(errorFragment, ErrorFragment.TAG)
-                                errorFragment.view?.requestFocus()
+                                errorFragment.view?.post {
+                                    errorFragment.view?.requestFocus()
+                                }
                             }
                             errorRunnable = newErrorRunnable
                             handler.postDelayed(newErrorRunnable, 500)
@@ -859,7 +861,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun onKey(keyCode: Int): Boolean {
-        Log.d(TAG, "keyCode $keyCode")
+        Log.d(TAG, "onKey keyCode $keyCode")
         when (keyCode) {
             KeyEvent.KEYCODE_0,
             KeyEvent.KEYCODE_1,
