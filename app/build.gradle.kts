@@ -36,7 +36,7 @@ android {
                 keyAlias = props["keyAlias"] as String
                 keyPassword = props["keyPassword"] as String
             } else {
-                storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+                storeFile = file(System.getProperty("user.home") + "/.android/release.keystore")
                 storePassword = "android"
                 keyAlias = "androiddebugkey"
                 keyPassword = "android"
