@@ -278,7 +278,6 @@ class MainActivity : AppCompatActivity() {
                             stopLoadingTimeout()
                             errorRunnable?.let { handler.removeCallbacks(it) }
                             errorRunnable = null
-                            errorFragment.stopCountdown()
                             hideFragment(errorFragment)
                             showFragment(playerFragment, PlayerFragment.TAG)
                         } else {
@@ -288,12 +287,11 @@ class MainActivity : AppCompatActivity() {
                             errorRunnable?.let { handler.removeCallbacks(it) }
                             val newErrorRunnable = Runnable {
                                 errorRunnable = null
+                                playerFragment.stop()
                                 hideFragment(playerFragment)
                                 errorFragment.setMsg(err)
                                 showFragment(errorFragment, ErrorFragment.TAG)
-                                errorFragment.startCountdown {
-                                    next()
-                                }
+                                errorFragment.view?.requestFocus()
                             }
                             errorRunnable = newErrorRunnable
                             handler.postDelayed(newErrorRunnable, 500)
@@ -587,6 +585,10 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .show(fragment)
             .commitAllowingStateLoss()
+
+        if (fragment !== playerFragment) {
+            fragment.view?.bringToFront()
+        }
     }
 
     private fun hideFragment(fragment: Fragment) {

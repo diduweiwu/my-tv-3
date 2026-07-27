@@ -32,13 +32,14 @@ import com.lizongying.mytv0.showToast
 import com.lizongying.mytv3.MyTVApplication
 import io.github.lizongying.Gua
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
-import java.util.concurrent.Semaphore
 
 
 class MainViewModel : ViewModel() {
@@ -50,6 +51,8 @@ class MainViewModel : ViewModel() {
     private var cacheFile: File? = null
     private var cacheChannels = ""
     private var initialized = false
+
+    private var preloadJob: Job? = null
 
     private lateinit var cacheEPG: File
     private var epgUrl = SP.epg
@@ -199,8 +202,8 @@ class MainViewModel : ViewModel() {
             return
         }
 
-        // 使用 Semaphore 限制并发数为 15
-        val semaphore = Semaphore(15)
+        // 使用 Semaphore 限制并发数为 5
+        val semaphore = Semaphore(5)
 
         // 并行预加载所有频道的 logo
         withContext(Dispatchers.IO) {
@@ -689,7 +692,8 @@ class MainViewModel : ViewModel() {
 
         groupModel.setChange()
 
-        viewModelScope.launch {
+        preloadJob?.cancel()
+        preloadJob = viewModelScope.launch {
             preloadLogo()
         }
 

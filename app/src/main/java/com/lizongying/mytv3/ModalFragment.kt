@@ -32,6 +32,15 @@ class ModalFragment : DialogFragment() {
         dialog?.window?.apply {
             addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
             decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+
+            // 修复 TV 上弹窗显示问题：显式设置窗口大小为全屏
+            setLayout(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT
+            )
+
+            // 清除对话框默认背景，避免只显示遮罩
+            setBackgroundDrawableResource(android.R.color.transparent)
         }
     }
 
@@ -56,8 +65,8 @@ class ModalFragment : DialogFragment() {
 
             val u = "$url?${getDateTimestamp().toString().reversed()}"
 
-            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                val img = QrCodeUtil().createQRCodeBitmap(u, size, size)
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
+                val img = QrCodeUtil.createQRCodeBitmap(u)
                 withContext(Dispatchers.Main) {
                     if (_binding != null) {
                         if (img != null) {
@@ -65,9 +74,7 @@ class ModalFragment : DialogFragment() {
                             binding.modalImage.layoutParams.height = size
                             binding.modalImage.visibility = View.VISIBLE
 
-                            Glide.with(requireContext())
-                                .load(img)
-                                .into(binding.modalImage)
+                            binding.modalImage.setImageBitmap(img)
                             binding.modalText.text = u.removePrefix("http://")
                             binding.modalText.visibility = View.VISIBLE
                         } else {

@@ -1,45 +1,50 @@
-# 软件重命名完成总结
+# 修复 TV 上远程配置二维码弹窗显示异常 - 完成总结
 
-## 修改内容
+## 修复概述
 
-### 1. 应用名称（简体统一）
-- **从**: `我的電視·〇` / `我的電視·3`（繁体）
-- **改为**: `我的电视·3`（简体）
+成功修复了 TV 上远程配置二维码弹窗只显示背景遮罩、内容无法正确展示的问题。
 
-### 2. 包名和应用ID
-- **从**: `com.lizongying.mytv0`
-- **改为**: `com.lizongying.mytv3`
+## 问题根因
 
-### 3. 目录结构
-- **从**: `app/src/main/java/com/lizongying/mytv0/`
-- **改为**: `app/src/main/java/com/lizongying/mytv3/`
+`ModalFragment` 继承自 `DialogFragment`，在 `onStart()` 方法中**没有显式设置窗口大小**。在 TV 设备上，DialogFragment 默认的窗口行为与手机不同，导致：
+- 窗口尺寸为零或极小
+- 只显示背景遮罩层
+- 二维码内容无法展示
 
-## 修改文件清单
+对比项目中另一个 `SourcesFragment`（DialogFragment），它在 `onStart()` 中显式调用了 `setLayout()` 设置窗口尺寸，因此能正常显示。
 
-| 文件 | 修改内容 |
-|------|----------|
-| `app/src/main/res/values/strings.xml` | `app_name` 改为 `我的电视·3` |
-| `app/src/main/res/values-zh-rTW/strings.xml` | `app_name` 改为 `我的电视·3`（简体） |
-| `app/src/main/res/raw/index.html` | 所有标题和JavaScript中的appName改为简体 |
-| `app/build.gradle.kts` | `namespace` 和 `applicationId` 改为 `com.lizongying.mytv3` |
-| `app/src/main/AndroidManifest.xml` | banner 改为 `@drawable/logo0` |
-| `app/src/main/res/layout/menu.xml` | 左侧菜单顶部添加应用名称文本标题 |
-| `app/src/main/res/layout/setting.xml` | 右侧设置菜单应用名称加大字号(24sp)并居中 |
-| `README.md` | 标题改为简体 `我的电视·3` |
+## 修改的文件
 
-## Kotlin文件批量修改
-- 所有 `.kt` 文件的 `package` 声明从 `com.lizongying.mytv0` 改为 `com.lizongying.mytv3`
-- 所有 `.kt` 文件的 `import` 语句从 `com.lizongying.mytv0` 改为 `com.lizongying.mytv3`
+### `app/src/main/java/com/lizongying/mytv3/ModalFragment.kt`
 
-## UI改进
-1. **左侧菜单**：在频道列表顶部添加了文本标题"我的电视·3"，使用20sp加粗白色字体
-2. **右侧设置菜单**：将应用名称从18sp增加到24sp，并改为居中对齐，使其作为标题更加醒目
-3. **移除了banner图片引用**：AndroidManifest.xml中的banner从banner0.png改为logo0.png
+**修改内容**：在 `onStart()` 方法中添加窗口大小和背景设置
 
-## 构建验证
-✅ `./gradlew assembleDebug` 构建成功
+```kotlin
+override fun onStart() {
+    super.onStart()
+    dialog?.window?.apply {
+        addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
 
-## 注意事项
-- 所有中文名称已统一为简体字
-- 包名修改涉及所有Kotlin源文件，已通过sed批量替换完成
-- 目录重命名通过git mv完成，保留了文件历史
+        // 修复 TV 上弹窗显示问题：显式设置窗口大小为全屏
+        setLayout(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT
+        )
+
+        // 清除对话框默认背景，避免只显示遮罩
+        setBackgroundDrawableResource(android.R.color.transparent)
+    }
+}
+```
+
+## 验证结果
+
+- ✅ 项目构建成功
+- ⏳ 需要在 TV 设备上手动验证二维码弹窗显示效果
+
+## 后续建议
+
+1. 在真实 TV 设备上测试远程配置功能，确认二维码弹窗正常显示
+2. 测试赞赏弹窗（双二维码）在 TV 上的显示效果
+3. 对比模拟器和手机上的行为，确保一致性

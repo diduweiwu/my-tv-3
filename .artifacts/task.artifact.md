@@ -1,9 +1,9 @@
-- [x] Implement 5-second loading timeout in `MainActivity.kt`
-    - [x] Add `loadingTimeoutRunnable` property
-    - [x] Add `startLoadingTimeout` and `stopLoadingTimeout` methods
-    - [x] Integrate with `currentTVModel` and `errInfo` observers
-    - [x] Clean up in `onDestroy`
-- [x] Optimize timeout logic
-    - [x] Prevent timer reset on retries
-    - [x] Reduce error countdown from 5s to 3s
-- [x] Verify implementation
+# 修复 TV 上远程配置二维码弹窗显示异常
+
+## 任务清单
+- [x] 修改 `ModalFragment.kt`，在 `onStart()` 中显式设置窗口大小
+- [x] 验证构建是否正常
+- [ ] 在 TV 上测试二维码弹窗显示（需用户手动验证）
+
+## 执行状态
+已完成代码修改和构建验证

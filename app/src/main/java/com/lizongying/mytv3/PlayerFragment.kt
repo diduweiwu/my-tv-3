@@ -237,6 +237,12 @@ class PlayerFragment : Fragment() {
         }
     }
 
+    fun stop() {
+        player?.stop()
+        player?.clearMediaItems()
+        handler.removeCallbacks(videoInfoRunnable)
+    }
+
     fun showVolume(visibility: Int) {
         binding.icon.visibility = visibility
         binding.volume.visibility = visibility
