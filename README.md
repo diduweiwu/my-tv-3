@@ -2,7 +2,7 @@
 
 電視視頻播放軟件，可以自定義視頻源
 
-[my-tv-0](https://github.com/lizongying/my-tv-0)
+[my-tv-3](https://github.com/diduweiwu/my-tv-3)
 
 ## 使用
 
@@ -59,11 +59,9 @@
 
 推薦配合使用 [my-tv-server](https://github.com/lizongying/my-tv-server)
 
-下載安裝 [releases](https://github.com/lizongying/my-tv-0/releases/)
+下載安裝 [releases](https://github.com/diduweiwu/my-tv-3/releases/)
 
 注意，“*-kitkat”為安卓4.4兼容版本
-
-更多下載地址 [my-tv-0](https://lyrics.run/my-tv-0.html)
 
 ![image](./screenshots/Screenshot_20240810_151748.png)
 ![image](./screenshots/Screenshot_20240813_232847.png)
@@ -96,7 +94,14 @@ adb install my-tv-0.apk
 
 ## 讚賞
 
-![image](./screenshots/appreciate.png)
+![微信](./app/src/main/res/drawable/wechat.png)
+![支付宝](./app/src/main/res/drawable/alipay.png)
+
+## 感謝
+
+- [my-tv-0](https://github.com/lizongying/my-tv-0) - lizongying大佬的項目
+- [mytv-android](https://github.com/mytv-android/mytv-android) - my tv android大佬的項目
+
 
 ## 感謝
 
