@@ -18,5 +18,5 @@ files
 .kotlin/
 app/release/
 .README.md
-./.artifacts
-./.android
+.artifacts
+.android
