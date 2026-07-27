@@ -47,16 +47,23 @@ jobs:
       - name: Build release APKs
         run: ./gradlew assembleRelease
 
-      - name: Find universal APK
-        id: find_apk
+      # --- 修改点 1：查找所有 APK ---
+      - name: Find all APKs
+        id: find_apks
         run: |
-          APK=$(find app/build/outputs/apk/release -name '*universal.apk' -type f | head -n 1)
-          if [ -z "$APK" ]; then
-            echo "ERROR: No universal APK found!" >&2
+          # 使用 find 命令查找所有 .apk 文件
+          # 使用 tr '\n' ',' 将换行符替换为逗号，因为 softprops 插件支持逗号分隔的文件列表
+          APKS=$(find app/build/outputs/apk/release -name '*.apk' -type f | tr '\n' ',')
+          
+          if [ -z "$APKS" ]; then
+            echo "ERROR: No APKs found!" >&2
             exit 1
           fi
-          echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
-          echo "Universal APK found: $APK"
+          
+          # 输出结果，去掉末尾可能多余的逗号
+          echo "apk_paths=${APKS%,}" >> "$GITHUB_OUTPUT"
+          echo "Found APKs:"
+          echo "$APKS"
 
       - name: Get changelog
         id: get_changelog
@@ -78,12 +85,14 @@ jobs:
             echo "ref_name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create Release and Upload APK
+      # --- 修改点 2：上传所有 APK ---
+      - name: Create Release and Upload APKs
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ steps.version.outputs.tag }}
           body: ${{ steps.get_changelog.outputs.changelog }}
-          files: ${{ steps.find_apk.outputs.apk_path }}
+          # 这里直接使用上一步生成的逗号分隔的路径列表
+          files: ${{ steps.find_apks.outputs.apk_paths }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
