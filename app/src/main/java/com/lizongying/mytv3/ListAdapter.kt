@@ -118,7 +118,7 @@ class ListAdapter(
                         visible = true
                     }
                 } else {
-                    viewHolder.focus(false, position == activePosition)
+                    viewHolder.focus(false)
                 }
             }
 
@@ -218,7 +218,7 @@ class ListAdapter(
 
             viewHolder.bindImage(tvModel)
 
-            viewHolder.focus(view.hasFocus(), position == activePosition)
+            viewHolder.focus(view.hasFocus())
         }
     }
 
@@ -274,18 +274,13 @@ class ListAdapter(
             imageHelper.loadImage(name, binding.icon, tv.logo)
         }
 
-        fun focus(hasFocus: Boolean, isActive: Boolean = false) {
+        fun focus(hasFocus: Boolean) {
             if (hasFocus) {
                 binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
                 binding.root.setBackgroundResource(R.color.focus)
             } else {
-                if (isActive) {
-                    binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
-                    binding.root.setBackgroundColor(android.graphics.Color.parseColor("#400096A6"))
-                } else {
-                    binding.title.setTextColor(ContextCompat.getColor(context, R.color.title_blur))
-                    binding.root.setBackgroundResource(0)
-                }
+                binding.title.setTextColor(ContextCompat.getColor(context, R.color.title_blur))
+                binding.root.setBackgroundResource(0)
             }
         }
 
@@ -312,6 +307,7 @@ class ListAdapter(
         Log.i(TAG, "toPosition $position")
         activePosition = position
         recyclerView.post {
+            notifyDataSetChanged()
             val layoutManager = recyclerView.layoutManager as? LinearLayoutManager
             layoutManager?.scrollToPositionWithOffset(position, 0)
 
@@ -319,7 +315,6 @@ class ListAdapter(
                 val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)
                 if (viewHolder != null) {
                     viewHolder.itemView.apply {
-                        isSelected = true
                         requestFocus()
                     }
                 } else {
@@ -327,14 +322,12 @@ class ListAdapter(
                     recyclerView.postDelayed({
                         val vh = recyclerView.findViewHolderForAdapterPosition(position)
                         vh?.itemView?.apply {
-                            isSelected = true
                             requestFocus()
                         }
                     }, 100)
                 }
             }, 100)
         }
-        notifyDataSetChanged()
     }
 
     interface ItemListener {

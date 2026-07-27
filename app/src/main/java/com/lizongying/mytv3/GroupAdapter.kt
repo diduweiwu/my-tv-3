@@ -178,7 +178,7 @@ class GroupAdapter(
         }
 
         viewHolder.bindTitle(listTVModel.getName())
-        viewHolder.focus(view.hasFocus(), position == activePosition)
+        viewHolder.focus(view.hasFocus())
     }
 
     override fun getItemCount() = tvGroupModel.size()
@@ -193,23 +193,18 @@ class GroupAdapter(
             }
         }
 
-        fun focus(hasFocus: Boolean, isActive: Boolean = false) {
+        fun focus(hasFocus: Boolean) {
             if (hasFocus) {
                 binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
                 binding.root.setBackgroundResource(R.color.focus)
             } else {
-                if (isActive) {
-                    binding.title.setTextColor(ContextCompat.getColor(context, R.color.white))
-                    binding.root.setBackgroundColor(android.graphics.Color.parseColor("#400096A6"))
-                } else {
-                    binding.title.setTextColor(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.title_blur
-                        )
+                binding.title.setTextColor(
+                    ContextCompat.getColor(
+                        context,
+                        R.color.title_blur
                     )
-                    binding.root.setBackgroundResource(0)
-                }
+                )
+                binding.root.setBackgroundResource(0)
             }
         }
     }

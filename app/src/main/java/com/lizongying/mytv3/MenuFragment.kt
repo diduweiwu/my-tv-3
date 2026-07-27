@@ -297,10 +297,9 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
             listAdapter.toPosition(it.positionPlayingValue)
         }
 
-        if (binding.groupContainer.visibility == View.GONE) {
-            groupAdapter.focusable(false)
-            listAdapter.focusable(true)
-        }
+        // 默认让频道列表获取焦点，定位到当前频道
+        groupAdapter.focusable(false)
+        listAdapter.focusable(true)
 
         (activity as MainActivity).menuActive()
     }
