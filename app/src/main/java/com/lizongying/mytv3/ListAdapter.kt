@@ -11,7 +11,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.FOCUS_BEFORE_DESCENDANTS
+import android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
 import android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS
 import androidx.core.content.ContextCompat
 import androidx.core.view.setPadding
@@ -60,10 +60,10 @@ class ListAdapter(
     }
 
     fun focusable(able: Boolean) {
-        recyclerView.isFocusable = able
-        recyclerView.isFocusableInTouchMode = able
+        recyclerView.isFocusable = false
+        recyclerView.isFocusableInTouchMode = false
         if (able) {
-            recyclerView.descendantFocusability = FOCUS_BEFORE_DESCENDANTS
+            recyclerView.descendantFocusability = FOCUS_AFTER_DESCENDANTS
         } else {
             recyclerView.descendantFocusability = FOCUS_BLOCK_DESCENDANTS
         }
@@ -117,6 +117,8 @@ class ListAdapter(
                     } else {
                         visible = true
                     }
+                    // Ensure the item is visible during fast scrolling
+                    recyclerView.scrollToPosition(position)
                 } else {
                     viewHolder.focus(false)
                 }
