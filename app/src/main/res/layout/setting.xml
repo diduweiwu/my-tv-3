@@ -161,26 +161,41 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal"
+                    android:orientation="vertical"
                     android:padding="8dp"
                     android:layout_marginTop="2dp">
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/ui_alpha_label"
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/ui_alpha"
-                        android:textColor="@color/selector_button_text"
-                        android:textSize="13sp" />
+                        android:orientation="horizontal">
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/ui_alpha_value"
-                        android:layout_width="wrap_content"
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/ui_alpha_label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/ui_alpha"
+                            android:textColor="@color/selector_button_text"
+                            android:textSize="13sp" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/ui_alpha_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="100%"
+                            android:textColor="@color/selector_button_text"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatSeekBar
+                        android:id="@+id/ui_alpha_seekbar"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="100%"
-                        android:textColor="@color/selector_button_text"
-                        android:textSize="13sp" />
+                        android:layout_marginTop="8dp"
+                        android:max="255"
+                        android:progress="255"
+                        android:focusable="false" />
                 </LinearLayout>
             </LinearLayout>
 

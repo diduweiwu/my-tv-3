@@ -135,17 +135,21 @@ class SettingFragment : Fragment() {
             if (event.action == KeyEvent.ACTION_DOWN) {
                 when (keyCode) {
                     KeyEvent.KEYCODE_DPAD_LEFT -> {
-                        val current = SP.uiAlpha
-                        val next = max(0, current - 25)
-                        SP.uiAlpha = next
+                        val currentAlpha = SP.uiAlpha
+                        val currentPercent = Math.round(currentAlpha * 100f / 255f)
+                        val nextPercent = max(0, currentPercent - 5)
+                        val nextAlpha = Math.round(nextPercent * 255f / 100f)
+                        SP.uiAlpha = nextAlpha
                         viewModel.updateUIAlpha()
                         return@setOnKeyListener true
                     }
 
                     KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                        val current = SP.uiAlpha
-                        val next = min(255, current + 25)
-                        SP.uiAlpha = next
+                        val currentAlpha = SP.uiAlpha
+                        val currentPercent = Math.round(currentAlpha * 100f / 255f)
+                        val nextPercent = min(100, currentPercent + 5)
+                        val nextAlpha = Math.round(nextPercent * 255f / 100f)
+                        SP.uiAlpha = nextAlpha
                         viewModel.updateUIAlpha()
                         return@setOnKeyListener true
                     }
@@ -153,6 +157,21 @@ class SettingFragment : Fragment() {
             }
             false
         }
+
+        binding.uiAlphaSeekbar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    SP.uiAlpha = progress
+                    viewModel.updateUIAlpha()
+                }
+            }
+
+            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+
+            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {
+                (activity as MainActivity).settingActive()
+            }
+        })
 
         binding.remoteSettings.setOnClickListener {
             val imageModalFragment = ModalFragment()
@@ -228,7 +247,8 @@ class SettingFragment : Fragment() {
 
         viewModel.uiAlpha.observe(viewLifecycleOwner) { alpha ->
             binding.content.background?.alpha = alpha
-            binding.uiAlphaValue.text = "${(alpha * 100 / 255)}%"
+            binding.uiAlphaValue.text = "${Math.round(alpha * 100f / 255f)}%"
+            binding.uiAlphaSeekbar.progress = alpha
         }
 
         binding.switchDisplaySeconds.setOnCheckedChangeListener { _, isChecked ->
