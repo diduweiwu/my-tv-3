@@ -65,14 +65,49 @@ jobs:
           echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
           echo "previous_version=$PREVIOUS_VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Get changelog
-        id: get_changelog
+      - name: Update HISTORY.md and Get Changelog
+        id: update_history
         run: |
+          CURRENT_VERSION="${{ steps.tags.outputs.current_version }}"
+          PREVIOUS_VERSION="${{ steps.tags.outputs.previous_version }}"
+
+          if [ -z "$PREVIOUS_VERSION" ]; then
+            COMMITS=$(git log --oneline --no-merges --format="* %s")
+          else
+            COMMITS=$(git log "v${PREVIOUS_VERSION}..HEAD" --oneline --no-merges --format="* %s")
+          fi
+
+          if [ -n "$COMMITS" ]; then
+            {
+              echo "## 更新日志"
+              echo ""
+              echo "### v${CURRENT_VERSION}"
+              echo "$COMMITS"
+              tail -n +2 HISTORY.md
+            } > HISTORY.md.tmp
+            mv HISTORY.md.tmp HISTORY.md
+            echo "HISTORY.md updated"
+          fi
+
+          # 输出 changelog 用于 release body
           chmod +x history.sh
-          output=$(./history.sh "${{ steps.tags.outputs.current_version }}" "${{ steps.tags.outputs.previous_version }}")
+          output=$(./history.sh "${CURRENT_VERSION}" "${PREVIOUS_VERSION}")
           echo "changelog<<EOF" >> "$GITHUB_OUTPUT"
           echo "$output" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Commit updated HISTORY.md
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add HISTORY.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update HISTORY.md for v${{ steps.tags.outputs.current_version }}"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+        continue-on-error: true
 
       - name: Build release APKs
         run: ./gradlew assembleRelease
@@ -96,7 +131,7 @@ jobs:
         with:
           tag_name: ${{ steps.tags.outputs.current_tag }}
           name: Release ${{ steps.tags.outputs.current_tag }}
-          body: ${{ steps.get_changelog.outputs.changelog }}
+          body: ${{ steps.update_history.outputs.changelog }}
           files: ${{ steps.find_apks.outputs.apk_paths }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
