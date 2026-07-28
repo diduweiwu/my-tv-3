@@ -1,127 +1,115 @@
-# 赞赏弹窗并排展示微信/支付宝收款码
+# Walkthrough
 
-## ✅ 任务完成
+## 需求1：切换分组后的聚焦定位逻辑
 
-已成功实现点击"赞赏作者"后，弹窗并排展示 `wechat.png` 和 `alipay.png` 两张收款码图片。
+### 修改文件
+`app/src/main/java/com/lizongying/mytv3/MenuFragment.kt`
 
-## 📝 修改内容
+### 修改内容
+在 `onItemClicked(position: Int)` 方法中，更新了切换分组后的聚焦逻辑：
 
-### 1. 文件：`app/src/main/res/layout/modal.xml`
-
-**之前**：ConstraintLayout，单个 ImageView
-```xml
-<androidx.constraintlayout.widget.ConstraintLayout ...>
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/modal_image"
-        android:layout_width="200dp"
-        android:layout_height="200dp" />
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/modal_text"
-        .../>
-</androidx.constraintlayout.widget.ConstraintLayout>
-```
-
-**之后**：LinearLayout，支持单张图片和并排双图
-```xml
-<LinearLayout
-    android:id="@+id/modal"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:gravity="center">
-
-    <!-- 单张图片（默认隐藏，用于二维码等场景） -->
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/modal_image"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:visibility="gone" />
-
-    <!-- 并排展示两张收款码 -->
-    <LinearLayout
-        android:id="@+id/modal_image_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:visibility="gone">
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/modal_image_left"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:layout_margin="8dp"
-            android:contentDescription="WeChat Pay" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/modal_image_right"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:layout_margin="8dp"
-            android:contentDescription="Alipay" />
-    </LinearLayout>
-
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/modal_text"
-        .../>
-</LinearLayout>
-```
-
-### 2. 文件：`app/src/main/java/com/lizongying/mytv3/ModalFragment.kt`
-
-**添加 import**：
 ```kotlin
-import com.lizongying.mytv0.R
-```
+override fun onItemClicked(position: Int) {
+    if (!this::viewModel.isInitialized) {
+        Log.e(TAG, "viewModel is not initialized")
+        return
+    }
 
-**修改 onViewCreated 方法**：
-```kotlin
-val drawableId = arguments?.getInt(KEY_DRAWABLE_ID)
-if (drawableId == R.drawable.appreciate) {
-    // 赞赏弹窗：并排展示两张收款码
-    Glide.with(requireContext())
-        .load(R.drawable.wechat)
-        .into(binding.modalImageLeft)
-    Glide.with(requireContext())
-        .load(R.drawable.alipay)
-        .into(binding.modalImageRight)
-    binding.modalImageContainer.visibility = View.VISIBLE
-    binding.modalText.visibility = View.GONE
-} else if (drawableId != null) {
-    Glide.with(requireContext())
-        .load(drawableId)
-        .into(binding.modalImage)
-    binding.modalImage.visibility = View.VISIBLE
-    binding.modalText.visibility = View.GONE
+    viewModel.groupModel.getTVListModel(position)?.let { listModel ->
+        if (listModel.size() > 0) {
+            groupAdapter.activePosition = position
+            groupAdapter.notifyDataSetChanged()
+
+            viewModel.groupModel.setPosition(position)
+            SP.positionGroup = position
+
+            (binding.list.adapter as ListAdapter).update(listModel)
+
+            // 分组点击后，将焦点移到频道列表
+            groupAdapter.focusable(false)
+            listAdapter.focusable(true)
+
+            // 判断是否为当前频道所属分组
+            val currentPlayingGroup = viewModel.groupModel.positionPlayingValue
+            if (position == currentPlayingGroup) {
+                // 是当前频道所属分组，聚焦到当前频道
+                listAdapter.toPosition(listModel.positionPlayingValue)
+            } else {
+                // 不是当前频道所属分组，聚焦到第一个
+                listAdapter.toPosition(0)
+            }
+        }
+    }
 }
 ```
 
-### 3. 新增文件
-- 复制 `/Users/itest/Code/my-tv-0/screenshots/appreciate.png` 到 `app/src/main/res/drawable/appreciate.png`
+### 变更说明
+- 移除了原来的 `groupAdapter.requestFocusToPosition(position)`（点击后聚焦到分组）
+- 改为将焦点移到频道列表，并根据分组类型决定聚焦位置
 
-## 🔍 效果展示
+---
 
-点击"赞赏作者"按钮后，弹窗会显示：
+## 需求2：去掉左侧频道分组和弹窗列表组件的自动隐藏逻辑
 
+### 修改文件1
+`app/src/main/java/com/lizongying/mytv3/MainActivity.kt`
+
+### 修改内容
+1. **删除 `delayHideMenu` 常量**
+2. **清空 `menuActive()` 方法体**
+3. **删除 `hideMenu` Runnable**
+4. **`hideAllPopups()` 中移除 `handler.removeCallbacks(hideMenu)`**
+
+```kotlin
+// 修改前
+fun menuActive() {
+    handler.removeCallbacks(hideMenu)
+    handler.postDelayed(hideMenu, delayHideMenu)
+}
+
+private val hideMenu = Runnable {
+    if (!isFinishing && !supportFragmentManager.isStateSaved) {
+        if (!menuFragment.isHidden) {
+            supportFragmentManager.beginTransaction()
+                .hide(menuFragment)
+                .commitAllowingStateLoss()
+        }
+    }
+}
+
+// 修改后
+fun menuActive() {
+    // 已移除自动隐藏逻辑
+}
 ```
-┌─────────────────────────────────────┐
-│  ┌──────────┐    ┌──────────┐       │
-│  │          │    │          │       │
-│  │  WeChat  │    │  Alipay  │       │
-│  │   收款码  │    │   收款码  │       │
-│  │          │    │          │       │
-│  └──────────┘    └──────────┘       │
-│      (150dp)        (150dp)         │
-└─────────────────────────────────────┘
+
+---
+
+### 修改文件2
+`app/src/main/java/com/lizongying/mytv3/SourcesFragment.kt`
+
+### 修改内容
+1. **删除 `delayHideFragment` 常量**
+2. **删除 `hideFragment` Runnable**
+3. **移除 `onViewCreated` 中的 `handler.postDelayed(hideFragment, delayHideFragment)`**
+4. **简化 `onKey` 方法，移除定时器重置逻辑**
+
+```kotlin
+// 修改前
+override fun onKey(keyCode: Int, tag: String): Boolean {
+    handler.removeCallbacks(hideFragment)
+    handler.postDelayed(hideFragment, delayHideFragment)
+    return false
+}
+
+// 修改后
+override fun onKey(keyCode: Int, tag: String): Boolean {
+    return false
+}
 ```
 
-## ✅ 验证结果
+---
 
-```bash
-./gradlew app:assembleDebug --stacktrace
-# ✅ 构建成功！
-```
-
-## 🎉 总结
-
-现在点击"赞赏作者"按钮，弹窗会并排展示微信和支付宝两张收款码图片，用户可以方便地选择任意一种方式进行赞赏。
+## 验证结果
+- 三个文件均无编译错误
+- 所有修改符合需求描述

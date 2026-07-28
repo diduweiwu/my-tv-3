@@ -51,7 +51,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var programFragment: ProgramFragment
 
     private val handler = Handler(Looper.myLooper()!!)
-    private val delayHideMenu = 10 * 1000L
     private val delayHideSetting = 3 * 60 * 1000L
     private var errorRunnable: Runnable? = null
     private var loadingTimeoutRunnable: Runnable? = null
@@ -643,18 +642,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun menuActive() {
-        handler.removeCallbacks(hideMenu)
-        handler.postDelayed(hideMenu, delayHideMenu)
-    }
-
-    private val hideMenu = Runnable {
-        if (!isFinishing && !supportFragmentManager.isStateSaved) {
-            if (!menuFragment.isHidden) {
-                supportFragmentManager.beginTransaction()
-                    .hide(menuFragment)
-                    .commitAllowingStateLoss()
-            }
-        }
+        // 已移除自动隐藏逻辑
     }
 
     fun switchSoftDecode() {
@@ -682,7 +670,6 @@ class MainActivity : AppCompatActivity() {
         hideFragment(menuFragment)
         hideFragment(programFragment)
         hideFragment(settingFragment)
-        handler.removeCallbacks(hideMenu)
         handler.removeCallbacks(hideSetting)
         showTimeFragment()
     }

@@ -131,14 +131,12 @@ class GroupAdapter(
         }
 
         view.setOnKeyListener { _, keyCode, event: KeyEvent? ->
-            if (event?.action == KeyEvent.ACTION_DOWN) {
-                // Handle Enter/Confirm key
-                if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
-                    view.performClick()
-                    return@setOnKeyListener true
-                }
+            if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                return@setOnKeyListener true
+            }
 
-                // If it is already the first item and you continue to move up...
+            if (event?.action == KeyEvent.ACTION_DOWN) {
+
                 if (keyCode == KeyEvent.KEYCODE_DPAD_UP && position == 0) {
                     val p = getItemCount() - 1
 

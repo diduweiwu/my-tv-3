@@ -22,7 +22,6 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
     private val binding get() = _binding!!
 
     private val handler = Handler(Looper.myLooper()!!)
-    private val delayHideFragment = 10000L
 
     private lateinit var viewModel: MainViewModel
 
@@ -65,8 +64,6 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
         sourcesAdapter.setItemListener(this)
         sourcesAdapter.toPosition(if (viewModel.sources.checkedValue > -1) viewModel.sources.checkedValue else 0)
 
-        handler.postDelayed(hideFragment, delayHideFragment)
-
         viewModel.sources.removed.observe(this) { items ->
             sourcesAdapter.removed(items.first)
             checkEmpty()
@@ -83,12 +80,6 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
         }
 
         checkEmpty()
-    }
-
-    private val hideFragment = Runnable {
-        if (!this.isHidden) {
-            this.dismiss()
-        }
     }
 
     override fun onDestroyView() {
@@ -114,8 +105,6 @@ class SourcesFragment : DialogFragment(), SourcesAdapter.ItemListener {
     }
 
     override fun onKey(keyCode: Int, tag: String): Boolean {
-        handler.removeCallbacks(hideFragment)
-        handler.postDelayed(hideFragment, delayHideFragment)
         return false
     }
 

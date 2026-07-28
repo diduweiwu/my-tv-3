@@ -166,7 +166,15 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
 
     override fun onItemFocusChange(listTVModel: TVListModel, hasFocus: Boolean) {
         if (hasFocus) {
-            (binding.list.adapter as ListAdapter).update(listTVModel)
+            val listAdapter = binding.list.adapter as ListAdapter
+            listAdapter.update(listTVModel)
+
+            if (listTVModel.getGroupIndex() == viewModel.groupModel.positionPlayingValue) {
+                listAdapter.toPosition(listTVModel.positionPlayingValue, false)
+            } else {
+                listAdapter.toPosition(0, false)
+            }
+
             (activity as MainActivity).menuActive()
         }
     }
@@ -189,12 +197,23 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
                 // without automatically switching to the first channel.
                 groupAdapter.activePosition = position
                 groupAdapter.notifyDataSetChanged()
-                groupAdapter.requestFocusToPosition(position)
 
                 viewModel.groupModel.setPosition(position)
                 SP.positionGroup = position
 
-                (binding.list.adapter as ListAdapter).update(listModel)
+
+                // 分组点击后，将焦点移到频道列表
+                groupAdapter.focusable(false)
+                listAdapter.focusable(true)
+
+                // 判断是否为当前频道所属分组
+                if (listModel.getGroupIndex() == viewModel.groupModel.positionPlayingValue) {
+                    // 是当前频道所属分组，聚焦到当前频道
+                    listAdapter.toPosition(listModel.positionPlayingValue)
+                } else {
+                    // 不是当前频道所属分组，聚焦到第一个
+                    listAdapter.toPosition(0)
+                }
             }
         }
     }

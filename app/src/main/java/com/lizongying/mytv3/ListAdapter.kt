@@ -314,7 +314,7 @@ class ListAdapter(
         }
     }
 
-    fun toPosition(position: Int) {
+    fun toPosition(position: Int, focus: Boolean = true) {
         Log.i(TAG, "toPosition $position")
         activePosition = position
         recyclerView.post {
@@ -322,22 +322,24 @@ class ListAdapter(
             val layoutManager = recyclerView.layoutManager as? LinearLayoutManager
             layoutManager?.scrollToPositionWithOffset(position, 0)
 
-            recyclerView.postDelayed({
-                val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)
-                if (viewHolder != null) {
-                    viewHolder.itemView.apply {
-                        requestFocus()
-                    }
-                } else {
-                    // Try one more time if not found
-                    recyclerView.postDelayed({
-                        val vh = recyclerView.findViewHolderForAdapterPosition(position)
-                        vh?.itemView?.apply {
+            if (focus) {
+                recyclerView.postDelayed({
+                    val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)
+                    if (viewHolder != null) {
+                        viewHolder.itemView.apply {
                             requestFocus()
                         }
-                    }, 100)
-                }
-            }, 100)
+                    } else {
+                        // Try one more time if not found
+                        recyclerView.postDelayed({
+                            val vh = recyclerView.findViewHolderForAdapterPosition(position)
+                            vh?.itemView?.apply {
+                                requestFocus()
+                            }
+                        }, 100)
+                    }
+                }, 100)
+            }
         }
     }
 
