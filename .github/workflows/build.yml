@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -44,15 +46,40 @@ jobs:
           keyPassword=${{ secrets.KEYSTORE_PASSWORD }}
           EOF
 
+      - name: Get version tags
+        id: tags
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            CURRENT_TAG="v${{ github.event.inputs.version }}"
+            CURRENT_VERSION="${{ github.event.inputs.version }}"
+          else
+            CURRENT_TAG="${{ github.ref_name }}"
+            CURRENT_VERSION="${CURRENT_TAG#v}"
+          fi
+
+          # Get previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${CURRENT_TAG}^" 2>/dev/null || echo "")
+          PREVIOUS_VERSION="${PREVIOUS_TAG#v}"
+
+          echo "current_tag=$CURRENT_TAG" >> "$GITHUB_OUTPUT"
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "previous_version=$PREVIOUS_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Get changelog
+        id: get_changelog
+        run: |
+          chmod +x history.sh
+          output=$(./history.sh "${{ steps.tags.outputs.current_version }}" "${{ steps.tags.outputs.previous_version }}")
+          echo "changelog<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$output" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
       - name: Build release APKs
         run: ./gradlew assembleRelease
 
-      # --- 修改点 1：查找所有 APK ---
       - name: Find all APKs
         id: find_apks
         run: |
-          # 使用 find 命令查找所有 .apk 文件
-          # 使用 tr '\n' ',' 将换行符替换为逗号，因为 softprops 插件支持逗号分隔的文件列表
           APKS=$(find app/build/outputs/apk/release -name '*.apk' -type f | tr '\n' ',')
           
           if [ -z "$APKS" ]; then
@@ -60,39 +87,16 @@ jobs:
             exit 1
           fi
           
-          # 输出结果，去掉末尾可能多余的逗号
           echo "apk_paths=${APKS%,}" >> "$GITHUB_OUTPUT"
           echo "Found APKs:"
           echo "$APKS"
 
-      - name: Get changelog
-        id: get_changelog
-        run: |
-          chmod +x history.sh
-          output=$(./history.sh)
-          echo "changelog<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$output" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-
-      - name: Get version tag
-        id: version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=v${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-            echo "ref_name=v${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-            echo "ref_name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-          fi
-
-      # --- 修改点 2：上传所有 APK ---
       - name: Create Release and Upload APKs
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: Release ${{ steps.version.outputs.tag }}
+          tag_name: ${{ steps.tags.outputs.current_tag }}
+          name: Release ${{ steps.tags.outputs.current_tag }}
           body: ${{ steps.get_changelog.outputs.changelog }}
-          # 这里直接使用上一步生成的逗号分隔的路径列表
           files: ${{ steps.find_apks.outputs.apk_paths }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
