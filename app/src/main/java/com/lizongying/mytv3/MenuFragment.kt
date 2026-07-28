@@ -185,8 +185,16 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
 
         viewModel.groupModel.getTVListModel(position)?.let { listModel ->
             if (listModel.size() > 0) {
-                // Switch to the first channel of the group
-                onItemClicked(0, "list")
+                // Switch to the group and update the displayed channel list
+                // without automatically switching to the first channel.
+                groupAdapter.activePosition = position
+                groupAdapter.notifyDataSetChanged()
+                groupAdapter.requestFocusToPosition(position)
+
+                viewModel.groupModel.setPosition(position)
+                SP.positionGroup = position
+
+                (binding.list.adapter as ListAdapter).update(listModel)
             }
         }
     }
