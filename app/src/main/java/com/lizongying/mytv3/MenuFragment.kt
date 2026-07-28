@@ -198,9 +198,11 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
                 groupAdapter.activePosition = position
                 groupAdapter.notifyDataSetChanged()
 
-                viewModel.groupModel.setPosition(position)
-                SP.positionGroup = position
+                val groupIndex = listModel.getGroupIndex()
+                viewModel.groupModel.setPosition(groupIndex)
+                SP.positionGroup = groupIndex
 
+                listAdapter.update(listModel)
 
                 // 分组点击后，将焦点移到频道列表
                 groupAdapter.focusable(false)
