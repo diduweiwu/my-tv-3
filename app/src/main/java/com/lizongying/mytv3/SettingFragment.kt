@@ -386,26 +386,21 @@ class SettingFragment : Fragment() {
 
     private fun requestInstallPermissions() {
         val context = requireContext()
-        val permissionsList = mutableListOf<String>()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !context.packageManager.canRequestPackageInstalls()) {
-            permissionsList.add(Manifest.permission.REQUEST_INSTALL_PACKAGES)
+            try {
+                val intent = android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES.let {
+                    android.content.Intent(it, android.net.Uri.parse("package:${context.packageName}"))
+                }
+                startActivityForResult(intent, REQUEST_INSTALL_CODE)
+            } catch (e: Exception) {
+                Log.e(TAG, "open settings failed", e)
+                updateManager.checkAndUpdate()
+            }
+            return
         }
 
-        checkAndAddPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE, permissionsList)
-        checkAndAddPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE, permissionsList)
-
-        if (permissionsList.isNotEmpty()) {
-            Log.i(TAG, "ask $permissionsList")
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                permissionsList.toTypedArray(),
-                PERMISSIONS_REQUEST_CODE
-            )
-        } else {
-            // updateManager.checkAndUpdate()  // 已禁用
-            Log.i(TAG, "版本检查已禁用")
-        }
+        updateManager.checkAndUpdate()
     }
 
     private fun requestReadPermissions() {
@@ -451,12 +446,18 @@ class SettingFragment : Fragment() {
                 }
             }
             if (allPermissionsGranted) {
-                // updateManager.checkAndUpdate()  // 已禁用
-                Log.i(TAG, "版本检查已禁用")
+                updateManager.checkAndUpdate()
             } else {
                 Log.w(TAG, "ask permissions failed")
                 R.string.authorization_failed.showToast()
             }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_INSTALL_CODE) {
+            updateManager.checkAndUpdate()
         }
     }
 
@@ -469,5 +470,6 @@ class SettingFragment : Fragment() {
         const val TAG = "SettingFragment"
         const val PERMISSIONS_REQUEST_CODE = 1
         const val PERMISSION_READ_EXTERNAL_STORAGE_REQUEST_CODE = 2
+        const val REQUEST_INSTALL_CODE = 3
     }
 }

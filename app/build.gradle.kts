@@ -106,11 +106,19 @@ fun getTag(): String {
 }
 
 fun getVersionCode(): Int {
-    // 基准时间：2024-01-01 00:00:00 UTC 的时间戳（毫秒）
-    val baseTimeMillis = 1704067200000L
-    val currentTimeMillis = System.currentTimeMillis()
-    // 计算从基准时间开始的分钟数，确保每次构建自动递增
-    return ((currentTimeMillis - baseTimeMillis) / (1000 * 60)).toInt()
+    val tag = getTag()
+    if (tag.isNotEmpty()) {
+        val baseVersion = tag.split("-").firstOrNull() ?: tag
+        val parts = baseVersion.split(".")
+        val major = parts.getOrNull(0)?.toIntOrNull() ?: 0
+        val minor = parts.getOrNull(1)?.toIntOrNull() ?: 0
+        val patch = parts.getOrNull(2)?.toIntOrNull() ?: 0
+        val build = parts.getOrNull(3)?.toIntOrNull() ?: 0
+        return major * 1000000 + minor * 10000 + patch * 100 + build
+    }
+    val sdf = SimpleDateFormat("yyyyMMddHH", Locale.getDefault())
+    val dateStr = sdf.format(Date())
+    return dateStr.toIntOrNull() ?: 1000000
 }
 
 fun getVersionName(): String {
