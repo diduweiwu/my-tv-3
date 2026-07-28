@@ -73,25 +73,20 @@ class GroupAdapter(
     @SuppressLint("RecyclerView")
     fun requestFocusToPosition(position: Int) {
         recyclerView.postDelayed({
-            val layoutManager = recyclerView.layoutManager as? LinearLayoutManager
-            layoutManager?.scrollToPositionWithOffset(position, 0)
-
-            recyclerView.postDelayed({
-                val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)
-                if (viewHolder != null) {
-                    viewHolder.itemView.apply {
+            val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)
+            if (viewHolder != null) {
+                viewHolder.itemView.apply {
+                    isSelected = true
+                    requestFocus()
+                }
+            } else {
+                recyclerView.postDelayed({
+                    recyclerView.findViewHolderForAdapterPosition(position)?.itemView?.apply {
                         isSelected = true
                         requestFocus()
                     }
-                } else {
-                    recyclerView.postDelayed({
-                        recyclerView.findViewHolderForAdapterPosition(position)?.itemView?.apply {
-                            isSelected = true
-                            requestFocus()
-                        }
-                    }, 50)
-                }
-            }, 50)
+                }, 50)
+            }
         }, 50)
     }
 
