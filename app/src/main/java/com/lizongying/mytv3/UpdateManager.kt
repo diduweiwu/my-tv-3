@@ -209,11 +209,13 @@ class UpdateManager(
             downloadDir?.mkdirs()
             val apkFile = File(downloadDir, fileName)
 
-            if (apkFile.exists()) {
+            if (apkFile.exists() && isFileComplete(apkFile)) {
                 isDownloading = false
                 progressListener?.onDownloadComplete()
                 installApk(context, apkFile)
                 return
+            } else if (apkFile.exists()) {
+                apkFile.delete()
             }
 
             val request = DownloadManager.Request(Uri.parse(updateInfo.downloadUrl))
@@ -245,18 +247,30 @@ class UpdateManager(
                             val status =
                                 cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
                             if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                                val totalIdx =
+                                    cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
+                                val expectedSize = cursor.getLong(totalIdx)
+                                cursor.close()
                                 isDownloading = false
                                 progressListener?.onDownloadComplete()
                                 Handler(Looper.getMainLooper()).postDelayed({
-                                    installApk(context, apkFile)
+                                    if (isFileComplete(apkFile, expectedSize)) {
+                                        installApk(context, apkFile)
+                                    } else {
+                                        Log.e(TAG, "APK file incomplete, deleting")
+                                        apkFile.delete()
+                                        progressListener?.onDownloadFailed()
+                                    }
                                 }, 500)
                             } else {
+                                cursor.close()
                                 Log.i(TAG, "Download failure")
                                 isDownloading = false
                                 progressListener?.onDownloadFailed()
                             }
+                        } else {
+                            cursor.close()
                         }
-                        cursor.close()
                         context.unregisterReceiver(this)
                     }
                 }
@@ -347,6 +361,19 @@ class UpdateManager(
         }
         progressHandler = null
         progressRunnable = null
+    }
+
+    private fun isFileComplete(apkFile: File, expectedSize: Long = -1L): Boolean {
+        if (!apkFile.exists()) return false
+        if (apkFile.length() <= 0) return false
+        if (expectedSize > 0 && apkFile.length() != expectedSize) {
+            Log.w(
+                TAG,
+                "File size mismatch: expected=$expectedSize, actual=${apkFile.length()}"
+            )
+            return false
+        }
+        return true
     }
 
     private fun installApk(context: Context, apkFile: File) {
