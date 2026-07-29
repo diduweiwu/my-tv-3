@@ -482,6 +482,7 @@ class SettingFragment : Fragment(), ProgressListener {
     }
 
     override fun onProgress(text: String) {
+        Log.i(TAG, "onProgress: $text")
         _binding?.let {
             it.downloadProgress.text = text
             it.downloadProgress.visibility = View.VISIBLE
@@ -490,13 +491,14 @@ class SettingFragment : Fragment(), ProgressListener {
 
     private fun showTopToast(message: String) {
         val toast = Toast.makeText(requireContext(), message, Toast.LENGTH_LONG)
-        toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 0, 100)
         toast.show()
     }
 
     override fun onDownloadStart() {
+        Log.i(TAG, "onDownloadStart")
         _binding?.let {
             it.checkVersion.text = "更新中..."
+            it.checkVersion.isEnabled = false
         }
     }
 
@@ -504,6 +506,7 @@ class SettingFragment : Fragment(), ProgressListener {
         _binding?.let {
             it.downloadProgress.visibility = View.GONE
             it.checkVersion.text = getString(R.string.check_version)
+            it.checkVersion.isEnabled = true
         }
     }
 
@@ -511,6 +514,7 @@ class SettingFragment : Fragment(), ProgressListener {
         _binding?.let {
             it.downloadProgress.visibility = View.GONE
             it.checkVersion.text = getString(R.string.check_version)
+            it.checkVersion.isEnabled = true
         }
         showTopToast("下载完成，正在安装...")
     }
@@ -519,6 +523,7 @@ class SettingFragment : Fragment(), ProgressListener {
         _binding?.let {
             it.downloadProgress.visibility = View.GONE
             it.checkVersion.text = getString(R.string.check_version)
+            it.checkVersion.isEnabled = true
         }
         showTopToast("下载失败，请重试")
     }
