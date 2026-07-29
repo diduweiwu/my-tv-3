@@ -1,5 +1,9 @@
 # 我的电视·3
 
+![banner](./screenshots/banner.webp)
+
+![logo](./screenshots/logo.webp)
+
 电视视频播放软件，可以自定义视频源
 
 [my-tv-3](https://github.com/diduweiwu/my-tv-3)
