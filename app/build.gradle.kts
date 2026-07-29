@@ -19,6 +19,7 @@ android {
         targetSdk = 35
         versionCode = getVersionCode()
         versionName = getVersionName()
+
     }
 
     buildFeatures {

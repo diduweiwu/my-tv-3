@@ -440,7 +440,7 @@ class UpdateManager(
     companion object {
         private const val TAG = "UpdateManager"
         private const val API_URL = "https://api.github.com/repos/diduweiwu/my-tv-3/releases/latest"
-        private const val GH_PROXY = "https://gh-proxy.org/"
+        private const val GH_PROXY = "https://cdn.gh-proxy.org/"
     }
 
     override fun onConfirm() {
