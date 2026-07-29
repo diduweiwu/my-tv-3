@@ -97,6 +97,20 @@ androidComponents {
     }
 }
 
+tasks.configureEach {
+    if (name == "assembleRelease") {
+        doLast {
+            val outputDir = file("build/outputs/apk")
+            if (outputDir.exists()) {
+                outputDir.walkTopDown().filter { it.isFile && it.extension == "apk" }.forEach { file ->
+                    val newName = file.name.replace("app-", "my-tv-3-${getVersionName()}-")
+                    file.renameTo(file.parentFile.resolve(newName))
+                }
+            }
+        }
+    }
+}
+
 fun getTag(): String {
     return try {
         val process = Runtime.getRuntime().exec("git describe --tags --always")
