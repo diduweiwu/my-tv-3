@@ -286,7 +286,6 @@ class PlayerFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         if (player?.isPlaying == false) {
-            player?.prepare()
             player?.play()
         }
     }
@@ -294,7 +293,7 @@ class PlayerFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         if (player?.isPlaying == true) {
-            player?.stop()
+            player?.pause()
         }
     }
 
