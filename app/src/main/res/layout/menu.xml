@@ -1,22 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/menu"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:clickable="true"
-    android:focusable="false">
+        android:id="@+id/menu"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:clickable="true"
+        android:focusable="false">
 
     <LinearLayout
-        android:id="@+id/group_container"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+            android:id="@+id/group_container"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/group"
-            android:layout_width="match_parent"
+                android:id="@+id/group"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_menu_panel"
+                android:paddingTop="20dp"
+                android:paddingBottom="20dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:clipToPadding="false"
+                android:scrollbars="none" />
+
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:layout_marginStart="2dp"
             android:background="@drawable/bg_menu_panel"
             android:paddingTop="20dp"
             android:paddingBottom="20dp"
@@ -24,20 +39,5 @@
             android:paddingEnd="10dp"
             android:clipToPadding="false"
             android:scrollbars="none" />
-
-    </LinearLayout>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/list"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_marginStart="2dp"
-        android:background="@drawable/bg_menu_panel"
-        android:paddingTop="20dp"
-        android:paddingBottom="20dp"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:clipToPadding="false"
-        android:scrollbars="none" />
 
 </LinearLayout>

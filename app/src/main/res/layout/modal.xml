@@ -1,60 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/modal"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:gravity="center">
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/modal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
 
     <!-- 单张图片（默认隐藏，用于二维码等场景） -->
     <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/modal_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@color/white"
-        android:scaleType="fitCenter"
-        android:contentDescription="@string/app_name"
-        android:visibility="gone" />
+            android:id="@+id/modal_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/app_name"
+            android:visibility="gone" />
 
     <!-- 并排展示两张收款码 -->
     <LinearLayout
-        android:id="@+id/modal_image_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:visibility="gone">
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/modal_image_left"
+            android:id="@+id/modal_image_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:background="@color/white"
-            android:contentDescription="WeChat Pay" />
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:visibility="gone">
 
         <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/modal_image_right"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:background="@color/white"
-            android:contentDescription="Alipay" />
+                android:id="@+id/modal_image_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:background="@color/white"
+                android:contentDescription="WeChat Pay" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/modal_image_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:background="@color/white"
+                android:contentDescription="Alipay" />
     </LinearLayout>
 
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/modal_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:background="@color/blur"
-        android:paddingHorizontal="10dp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:textColor="@color/title_blur"
-        android:textSize="14sp"
-        android:visibility="gone"
-        tools:text=""/>
+            android:id="@+id/modal_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@color/blur"
+            android:paddingHorizontal="10dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/title_blur"
+            android:textSize="14sp"
+            android:visibility="gone"
+            tools:text="" />
 
 </LinearLayout>

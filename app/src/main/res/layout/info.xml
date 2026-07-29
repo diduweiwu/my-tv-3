@@ -1,94 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center">
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center">
 
     <FrameLayout
-        android:id="@+id/container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
         <LinearLayout
-            android:id="@+id/info"
-            android:layout_width="wrap_content"
-            android:layout_height="110dp"
-            android:layout_gravity="center_horizontal|bottom"
-            android:layout_marginBottom="20dp"
-            android:background="@drawable/rounded_dark"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+                android:id="@+id/info"
+                android:layout_width="wrap_content"
+                android:layout_height="110dp"
+                android:layout_gravity="center_horizontal|bottom"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/rounded_dark"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
             <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/logo"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:adjustViewBounds="true"
-                android:maxWidth="400px"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:paddingTop="0dp"
-                android:paddingBottom="0dp" />
+                    android:id="@+id/logo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:adjustViewBounds="true"
+                    android:maxWidth="400px"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp" />
 
             <LinearLayout
-                android:id="@+id/main"
-                android:layout_width="320dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="0dp"
-                android:gravity="start|center_vertical"
-                android:orientation="vertical"
-                android:padding="7dp">
+                    android:id="@+id/main"
+                    android:layout_width="320dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="0dp"
+                    android:gravity="start|center_vertical"
+                    android:orientation="vertical"
+                    android:padding="7dp">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="bottom"
-                    android:orientation="horizontal">
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="bottom"
+                        android:orientation="horizontal">
 
                     <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/title_blur"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        tools:text="CCTV-1" />
+                            android:id="@+id/title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/title_blur"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            tools:text="CCTV-1" />
 
                     <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/tech_info"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:singleLine="true"
-                        android:textColor="@color/description_blur"
-                        android:textSize="11sp"
-                        tools:text="1920x1080 | 50fps" />
+                            android:id="@+id/tech_info"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:singleLine="true"
+                            android:textColor="@color/description_blur"
+                            android:textSize="11sp"
+                            tools:text="1920x1080 | 50fps" />
                 </LinearLayout>
 
                 <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/desc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="start"
-                    android:layout_marginTop="4dp"
-                    android:gravity="start"
-                    android:singleLine="true"
-                    android:textColor="@color/description_blur"
-                    android:textSize="13sp"
-                    tools:text="12:00-13:00  正在播放：精彩节目" />
+                        android:id="@+id/desc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start"
+                        android:layout_marginTop="4dp"
+                        android:gravity="start"
+                        android:singleLine="true"
+                        android:textColor="@color/description_blur"
+                        android:textSize="13sp"
+                        tools:text="12:00-13:00  正在播放：精彩节目" />
 
                 <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/desc_next"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="start"
-                    android:layout_marginTop="2dp"
-                    android:gravity="start"
-                    android:singleLine="true"
-                    android:textColor="@color/description_blur"
-                    android:textSize="13sp"
-                    tools:text="13:00-14:00  稍后播放：预告节目" />
+                        android:id="@+id/desc_next"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start"
+                        android:layout_marginTop="2dp"
+                        android:gravity="start"
+                        android:singleLine="true"
+                        android:textColor="@color/description_blur"
+                        android:textSize="13sp"
+                        tools:text="13:00-14:00  稍后播放：预告节目" />
 
                 <!-- logo_url removed -->
 

@@ -17,8 +17,8 @@ android {
         applicationId = "com.lizongying.mytv3"
         minSdk = 21
         targetSdk = 35
-        versionCode = getVersionCode()
-        versionName = getVersionName()
+        versionCode = 2000300
+        versionName = "2.0.3.0"
     }
 
     buildFeatures {
@@ -80,7 +80,8 @@ android {
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
-            val abi = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
+            val abi =
+                output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
             if (abi != null) {
                 val abiMultiplier = mapOf(
                     "armeabi-v7a" to 1,

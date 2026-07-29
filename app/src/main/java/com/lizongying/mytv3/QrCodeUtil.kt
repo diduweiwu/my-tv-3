@@ -32,10 +32,16 @@ object QrCodeUtil {
             if (margin.isNotEmpty()) {
                 hints[EncodeHintType.MARGIN] = margin
             }
-            
+
             // Generate a small matrix for better performance
             val bitMatrix =
-                QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, DEFAULT_SIZE, DEFAULT_SIZE, hints)
+                QRCodeWriter().encode(
+                    content,
+                    BarcodeFormat.QR_CODE,
+                    DEFAULT_SIZE,
+                    DEFAULT_SIZE,
+                    hints
+                )
 
             val width = bitMatrix.width
             val height = bitMatrix.height
@@ -46,7 +52,7 @@ object QrCodeUtil {
                     pixels[offset + x] = if (bitMatrix[x, y]) colorBlack else colorWhite
                 }
             }
-            
+
             // Use RGB_565 to save memory and processing time as alpha is not needed for QR codes
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
             bitmap.setPixels(pixels, 0, width, 0, 0, width, height)

@@ -8,11 +8,15 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -22,15 +26,12 @@ import com.lizongying.mytv0.ModalFragment.Companion.KEY_URL
 import com.lizongying.mytv0.SimpleServer.Companion.PORT
 import com.lizongying.mytv0.databinding.SettingBinding
 import com.lizongying.mytv3.MyTVApplication
-import android.os.Handler
-import android.os.Looper
-import android.widget.Toast
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
 
-class SettingFragment : Fragment() {
+class SettingFragment : Fragment(), ProgressListener {
 
     private var _binding: SettingBinding? = null
     private val binding get() = _binding!!
@@ -46,7 +47,11 @@ class SettingFragment : Fragment() {
         } else {
             Log.e(TAG, "无法获取本地IP地址")
             Handler(Looper.getMainLooper()).post {
-                Toast.makeText(requireContext(), "无法获取本地IP地址，请检查网络连接", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    requireContext(),
+                    "无法获取本地IP地址，请检查网络连接",
+                    Toast.LENGTH_LONG
+                ).show()
             }
             "http://127.0.0.1:$PORT"
         }
@@ -158,8 +163,13 @@ class SettingFragment : Fragment() {
             false
         }
 
-        binding.uiAlphaSeekbar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+        binding.uiAlphaSeekbar.setOnSeekBarChangeListener(object :
+            android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(
+                seekBar: android.widget.SeekBar?,
+                progress: Int,
+                fromUser: Boolean
+            ) {
                 if (fromUser) {
                     SP.uiAlpha = progress
                     viewModel.updateUIAlpha()
@@ -173,7 +183,7 @@ class SettingFragment : Fragment() {
             }
         })
 
-        binding.remoteSettings.setOnClickListener {
+        binding.remoteSettings.setOnSingleClickListener {
             val imageModalFragment = ModalFragment()
             val args = Bundle()
             args.putString(KEY_URL, server)
@@ -183,19 +193,19 @@ class SettingFragment : Fragment() {
             mainActivity.settingActive()
         }
 
-        binding.checkVersion.setOnClickListener {
+        binding.checkVersion.setOnSingleClickListener {
             requestInstallPermissions()
             mainActivity.settingActive()
         }
 
-        binding.confirmConfig.setOnClickListener {
+        binding.confirmConfig.setOnSingleClickListener {
             val sourcesFragment = SourcesFragment()
 
             sourcesFragment.show(requireFragmentManager(), SourcesFragment.TAG)
             mainActivity.settingActive()
         }
 
-        binding.appreciate.setOnClickListener {
+        binding.appreciate.setOnSingleClickListener {
             val imageModalFragment = ModalFragment()
 
             val args = Bundle()
@@ -206,11 +216,11 @@ class SettingFragment : Fragment() {
             mainActivity.settingActive()
         }
 
-        binding.setting.setOnClickListener {
+        binding.setting.setOnSingleClickListener {
             hideSelf()
         }
 
-        binding.exit.setOnClickListener {
+        binding.exit.setOnSingleClickListener {
             requireActivity().finishAffinity()
         }
 
@@ -233,6 +243,7 @@ class SettingFragment : Fragment() {
         binding.sectionRemoteConfig.text = "${getString(R.string.server)}($uaValue)"
 
         updateManager = UpdateManager(context, context.appVersionCode)
+        updateManager.progressListener = this
 
         return binding.root
     }
@@ -366,6 +377,7 @@ class SettingFragment : Fragment() {
         super.onHiddenChanged(hidden)
         if (_binding != null && !hidden) {
             binding.remoteSettings.requestFocus()
+            binding.downloadProgress.visibility = View.GONE
         }
     }
 
@@ -390,7 +402,10 @@ class SettingFragment : Fragment() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !context.packageManager.canRequestPackageInstalls()) {
             try {
                 val intent = android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES.let {
-                    android.content.Intent(it, android.net.Uri.parse("package:${context.packageName}"))
+                    android.content.Intent(
+                        it,
+                        android.net.Uri.parse("package:${context.packageName}")
+                    )
                 }
                 startActivityForResult(intent, REQUEST_INSTALL_CODE)
             } catch (e: Exception) {
@@ -454,10 +469,50 @@ class SettingFragment : Fragment() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: android.content.Intent?
+    ) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_INSTALL_CODE) {
             updateManager.checkAndUpdate()
+        }
+    }
+
+    override fun onProgress(text: String) {
+        _binding?.let {
+            it.downloadProgress.text = text
+            it.downloadProgress.visibility = View.VISIBLE
+        }
+    }
+
+    override fun onDownloadComplete() {
+        _binding?.let {
+            it.downloadProgress.visibility = View.GONE
+        }
+        showTopToast("下载完成，正在安装...")
+    }
+
+    override fun onDownloadFailed() {
+        _binding?.let {
+            it.downloadProgress.visibility = View.GONE
+        }
+        showTopToast("下载失败，请重试")
+    }
+
+    private fun showTopToast(message: String) {
+        val toast = Toast.makeText(requireContext(), message, Toast.LENGTH_LONG)
+        toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 0, 100)
+        toast.show()
+    }
+
+    override fun onDownloadStart() {
+    }
+
+    override fun onDownloadCanceled() {
+        _binding?.let {
+            it.downloadProgress.visibility = View.GONE
         }
     }
 
@@ -471,5 +526,18 @@ class SettingFragment : Fragment() {
         const val PERMISSIONS_REQUEST_CODE = 1
         const val PERMISSION_READ_EXTERNAL_STORAGE_REQUEST_CODE = 2
         const val REQUEST_INSTALL_CODE = 3
+    }
+}
+
+private var lastClickTime = 0L
+private const val CLICK_INTERVAL = 1000L
+
+fun View.setOnSingleClickListener(action: (View) -> Unit) {
+    setOnClickListener { view ->
+        val now = System.currentTimeMillis()
+        if (now - lastClickTime >= CLICK_INTERVAL) {
+            lastClickTime = now
+            action(view)
+        }
     }
 }

@@ -8,6 +8,8 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.google.gson.Gson
@@ -36,6 +38,13 @@ class UpdateManager(
 
     private var downloadReceiver: BroadcastReceiver? = null
     var updateInfo: UpdateInfo? = null
+    var progressListener: ProgressListener? = null
+    private var progressHandler: Handler? = null
+    private var progressRunnable: Runnable? = null
+    private var currentDownloadId: Long = -1L
+    private var downloadManager: DownloadManager? = null
+    var isDownloading = false
+        private set
 
     fun checkAndUpdate() {
         Log.i(TAG, "checkAndUpdate")
@@ -48,11 +57,11 @@ class UpdateManager(
                 }
 
                 updateInfo = info
-                val currentVersionCode = getCurrentVersionCode(context)
+                val currentVersionName = getVersionName(context)
 
-                Log.i(TAG, "Remote: ${info.tagName} (${info.versionCode}), Current: $currentVersionCode")
+                Log.i(TAG, "Remote: ${info.tagName}, Current: $currentVersionName")
 
-                if (info.versionCode > currentVersionCode) {
+                if (compareVersion(info.versionName, currentVersionName) > 0) {
                     updateUI("最新版本：${info.versionName}", true)
                 } else {
                     updateUI("已是最新版本，不需要更新", false)
@@ -62,6 +71,18 @@ class UpdateManager(
                 updateUI("版本获取失败", false)
             }
         }
+    }
+
+    private fun compareVersion(v1: String, v2: String): Int {
+        val parts1 = v1.removePrefix("v").removePrefix("V").split(".").map { it.toIntOrNull() ?: 0 }
+        val parts2 = v2.removePrefix("v").removePrefix("V").split(".").map { it.toIntOrNull() ?: 0 }
+        val maxLen = maxOf(parts1.size, parts2.size)
+        for (i in 0 until maxLen) {
+            val a = parts1.getOrNull(i) ?: 0
+            val b = parts2.getOrNull(i) ?: 0
+            if (a != b) return a - b
+        }
+        return 0
     }
 
     private suspend fun fetchLatestRelease(): UpdateInfo? {
@@ -124,17 +145,12 @@ class UpdateManager(
         }
     }
 
-    private fun getCurrentVersionCode(context: Context): Int {
+    private fun getVersionName(context: Context): String {
         return try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                packageInfo.longVersionCode.toInt()
-            } else {
-                @Suppress("DEPRECATION")
-                packageInfo.versionCode
-            }
+            packageInfo.versionName ?: ""
         } catch (e: Exception) {
-            0
+            ""
         }
     }
 
@@ -185,33 +201,49 @@ class UpdateManager(
             val apkFile = File(downloadDir, fileName)
 
             if (apkFile.exists()) {
-                apkFile.delete()
+                progressListener?.onDownloadComplete()
+                installApk(context, apkFile)
+                return
             }
 
             val request = DownloadManager.Request(Uri.parse(updateInfo.downloadUrl))
                 .setTitle("${context.getString(R.string.app_name)} ${updateInfo.versionName}")
                 .setDescription("正在下载更新...")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileName)
+                .setDestinationInExternalFilesDir(
+                    context,
+                    Environment.DIRECTORY_DOWNLOADS,
+                    fileName
+                )
                 .setAllowedOverMetered(true)
                 .setAllowedOverRoaming(true)
                 .setMimeType("application/vnd.android.package-archive")
 
-            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            val downloadId = downloadManager.enqueue(request)
+            downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            currentDownloadId = downloadManager!!.enqueue(request)
+
+            startProgressPolling(apkFile)
 
             downloadReceiver = object : BroadcastReceiver() {
                 override fun onReceive(ctx: Context?, intent: Intent?) {
                     val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) ?: return
-                    if (id == downloadId) {
+                    if (id == currentDownloadId) {
+                        stopProgressPolling()
                         val query = DownloadManager.Query().setFilterById(id)
-                        val cursor = downloadManager.query(query)
+                        val cursor = downloadManager!!.query(query)
                         if (cursor.moveToFirst()) {
-                            val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                            val status =
+                                cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
                             if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                                installApk(context, apkFile)
+                                isDownloading = false
+                                progressListener?.onDownloadComplete()
+                                Handler(Looper.getMainLooper()).postDelayed({
+                                    installApk(context, apkFile)
+                                }, 500)
                             } else {
                                 Log.i(TAG, "Download failure")
+                                isDownloading = false
+                                progressListener?.onDownloadFailed()
                             }
                         }
                         cursor.close()
@@ -220,10 +252,82 @@ class UpdateManager(
                 }
             }
 
-            context.registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+            context.registerReceiver(
+                downloadReceiver,
+                IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+            )
         } catch (e: Exception) {
             Log.e(TAG, "startDownload error", e)
+            isDownloading = false
+            progressListener?.onDownloadFailed()
         }
+    }
+
+    private fun startProgressPolling(apkFile: File) {
+        progressHandler = Handler(Looper.getMainLooper())
+        progressRunnable = object : Runnable {
+            override fun run() {
+                if (currentDownloadId == -1L || downloadManager == null) return
+                try {
+                    val query = DownloadManager.Query().setFilterById(currentDownloadId)
+                    val cursor = downloadManager!!.query(query)
+                    if (cursor.moveToFirst()) {
+                        val statusIdx = cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)
+                        val status = cursor.getInt(statusIdx)
+                        when (status) {
+                            DownloadManager.STATUS_RUNNING -> {
+                                val downloadedIdx =
+                                    cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
+                                val totalIdx =
+                                    cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
+                                val downloaded = cursor.getLong(downloadedIdx)
+                                val total = cursor.getLong(totalIdx)
+                                if (total > 0) {
+                                    val percent = (downloaded * 100 / total).toInt()
+                                    val downloadedMB = downloaded / (1024 * 1024)
+                                    val totalMB = total / (1024 * 1024)
+                                    Handler(Looper.getMainLooper()).post {
+                                        progressListener?.onProgress("下载中 ${percent}% (${downloadedMB}MB/${totalMB}MB)")
+                                    }
+                                }
+                            }
+
+                            DownloadManager.STATUS_PENDING, DownloadManager.STATUS_PENDING -> {
+                                Handler(Looper.getMainLooper()).post {
+                                    progressListener?.onProgress("准备下载...")
+                                }
+                            }
+
+                            DownloadManager.STATUS_SUCCESSFUL -> {
+                                cursor.close()
+                                return
+                            }
+
+                            DownloadManager.STATUS_FAILED -> {
+                                cursor.close()
+                                Handler(Looper.getMainLooper()).post {
+                                    progressListener?.onDownloadFailed()
+                                }
+                                return
+                            }
+                        }
+                    }
+                    cursor.close()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Progress polling error", e)
+                }
+                progressHandler?.postDelayed(this, 500)
+            }
+        }
+        progressHandler!!.post(progressRunnable!!)
+    }
+
+    private fun stopProgressPolling() {
+        if (progressHandler != null && progressRunnable != null) {
+            progressHandler!!.removeCallbacks(progressRunnable!!)
+        }
+        progressHandler = null
+        progressRunnable = null
     }
 
     private fun installApk(context: Context, apkFile: File) {
@@ -231,7 +335,8 @@ class UpdateManager(
             val intent = Intent(Intent.ACTION_VIEW)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
-            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apkFile)
+            val uri =
+                FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apkFile)
             intent.setDataAndType(uri, "application/vnd.android.package-archive")
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
@@ -244,21 +349,38 @@ class UpdateManager(
     companion object {
         private const val TAG = "UpdateManager"
         private const val API_URL = "https://api.github.com/repos/diduweiwu/my-tv-3/releases/latest"
-        private const val GH_PROXY = "https://gh-proxy.org/"
+        private const val GH_PROXY = "https://v4.gh-proxy.org/"
     }
 
     override fun onConfirm() {
+        if (isDownloading) {
+            Log.i(TAG, "Download already in progress, ignoring")
+            return
+        }
         Log.i(TAG, "onConfirm $updateInfo")
+        isDownloading = true
+        progressListener?.onDownloadStart()
+        progressListener?.onProgress("准备下载...")
         updateInfo?.let { startDownload(it) }
     }
 
     override fun onCancel() {
+        progressListener?.onDownloadCanceled()
     }
 
     fun destroy() {
+        stopProgressPolling()
         if (downloadReceiver != null) {
             context.unregisterReceiver(downloadReceiver)
             Log.i(TAG, "destroy downloadReceiver")
         }
     }
+}
+
+interface ProgressListener {
+    fun onProgress(text: String)
+    fun onDownloadComplete()
+    fun onDownloadFailed()
+    fun onDownloadStart()
+    fun onDownloadCanceled()
 }

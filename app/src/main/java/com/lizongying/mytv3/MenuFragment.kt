@@ -122,11 +122,10 @@ class MenuFragment : Fragment(), GroupAdapter.ItemListener, ListAdapter.ItemList
     }
 
 
-
     fun updateSize() {
         val screenWidth = resources.displayMetrics.widthPixels
         val listWidth = screenWidth / 3
-        
+
         // Use a fixed proportion of screen width for the group list
         val baseGroupWidth = screenWidth / 6
 

@@ -4,6 +4,7 @@ import MainViewModel
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
@@ -16,15 +17,14 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.PopupWindow
-import android.widget.RelativeLayout
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceError
-import android.graphics.drawable.ColorDrawable
+import android.widget.PopupWindow
+import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -820,7 +820,11 @@ class MainActivity : AppCompatActivity() {
 
         // 添加 WebViewClient 处理页面加载
         webView.webViewClient = object : WebViewClient() {
-            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+            override fun onPageStarted(
+                view: WebView?,
+                url: String?,
+                favicon: android.graphics.Bitmap?
+            ) {
                 super.onPageStarted(view, url, favicon)
                 Log.d(TAG, "WebView loading: $url")
             }
