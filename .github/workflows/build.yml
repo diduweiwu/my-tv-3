@@ -59,17 +59,55 @@ jobs:
 
           # Get previous tag
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${CURRENT_TAG}^" 2>/dev/null || echo "")
-          PREVIOUS_VERSION="${PREVIOUS_TAG#v}"
 
           echo "current_tag=$CURRENT_TAG" >> "$GITHUB_OUTPUT"
           echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
-          echo "previous_version=$PREVIOUS_VERSION" >> "$GITHUB_OUTPUT"
+          echo "previous_tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Update HISTORY.md and Get Changelog
-        id: update_history
+      - name: Generate Changelog
+        id: changelog
         run: |
-          CURRENT_VERSION="${{ steps.tags.outputs.current_version }}"
-          PREVIOUS_VERSION="${{ steps.tags.outputs.previous_version }}"
+          CURRENT_TAG="${{ steps.tags.outputs.current_tag }}"
+          PREVIOUS_TAG="${{ steps.tags.outputs.previous_tag }}"
 
-          if [ -z "$PREVIOUS_VERSION" ]; then
-            COMMITS=$(git log --oneline --no-merg
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # 如果是第一个 tag，获取所有提交记录
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse)
+          else
+            # 获取两个 tag 之间的提交记录
+            COMMITS=$(git log --pretty=format:"- %s (%h)" ${PREVIOUS_TAG}..${CURRENT_TAG} --reverse)
+          fi
+
+          # 输出 changelog 用于 release body
+          echo "changelog<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$COMMITS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Build release APKs
+        run: ./gradlew assembleRelease
+
+      - name: Find all APKs
+        id: find_apks
+        run: |
+          APKS=$(find app/build/outputs/apk/release -name '*.apk' -type f | tr '\n' ',')
+          
+          if [ -z "$APKS" ]; then
+            echo "ERROR: No APKs found!" >&2
+            exit 1
+          fi
+          
+          echo "apk_paths=${APKS%,}" >> "$GITHUB_OUTPUT"
+          echo "Found APKs:"
+          echo "$APKS"
+
+      - name: Create Release and Upload APKs
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tags.outputs.current_tag }}
+          name: Release ${{ steps.tags.outputs.current_tag }}
+          body: |
+            ## 更新日志
+            ${{ steps.changelog.outputs.changelog }}
+          files: ${{ steps.find_apks.outputs.apk_paths }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
