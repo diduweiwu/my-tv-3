@@ -194,6 +194,7 @@ class SettingFragment : Fragment(), ProgressListener {
         }
 
         binding.checkVersion.setOnSingleClickListener {
+            if (updateManager.isDownloading) return@setOnSingleClickListener
             requestInstallPermissions()
             mainActivity.settingActive()
         }
@@ -487,20 +488,6 @@ class SettingFragment : Fragment(), ProgressListener {
         }
     }
 
-    override fun onDownloadComplete() {
-        _binding?.let {
-            it.downloadProgress.visibility = View.GONE
-        }
-        showTopToast("下载完成，正在安装...")
-    }
-
-    override fun onDownloadFailed() {
-        _binding?.let {
-            it.downloadProgress.visibility = View.GONE
-        }
-        showTopToast("下载失败，请重试")
-    }
-
     private fun showTopToast(message: String) {
         val toast = Toast.makeText(requireContext(), message, Toast.LENGTH_LONG)
         toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 0, 100)
@@ -508,12 +495,32 @@ class SettingFragment : Fragment(), ProgressListener {
     }
 
     override fun onDownloadStart() {
+        _binding?.let {
+            it.checkVersion.text = "更新中..."
+        }
     }
 
     override fun onDownloadCanceled() {
         _binding?.let {
             it.downloadProgress.visibility = View.GONE
+            it.checkVersion.text = getString(R.string.check_version)
         }
+    }
+
+    override fun onDownloadComplete() {
+        _binding?.let {
+            it.downloadProgress.visibility = View.GONE
+            it.checkVersion.text = getString(R.string.check_version)
+        }
+        showTopToast("下载完成，正在安装...")
+    }
+
+    override fun onDownloadFailed() {
+        _binding?.let {
+            it.downloadProgress.visibility = View.GONE
+            it.checkVersion.text = getString(R.string.check_version)
+        }
+        showTopToast("下载失败，请重试")
     }
 
     override fun onDestroyView() {

@@ -74,12 +74,21 @@ class UpdateManager(
     }
 
     private fun compareVersion(v1: String, v2: String): Int {
-        val parts1 = v1.removePrefix("v").removePrefix("V").split(".").map { it.toIntOrNull() ?: 0 }
-        val parts2 = v2.removePrefix("v").removePrefix("V").split(".").map { it.toIntOrNull() ?: 0 }
-        val maxLen = maxOf(parts1.size, parts2.size)
-        for (i in 0 until maxLen) {
-            val a = parts1.getOrNull(i) ?: 0
-            val b = parts2.getOrNull(i) ?: 0
+        fun parse(v: String): List<Int> {
+            val parts = v.trim()
+                .removePrefix("v")
+                .removePrefix("V")
+                .split("-")
+                .first()
+                .split(".")
+                .map { it.trim().toIntOrNull() ?: 0 }
+            return parts + List(4 - parts.size) { 0 }.takeLast(maxOf(0, 4 - parts.size))
+        }
+        val parts1 = parse(v1)
+        val parts2 = parse(v2)
+        for (i in 0 until 4) {
+            val a = parts1[i]
+            val b = parts2[i]
             if (a != b) return a - b
         }
         return 0
@@ -201,6 +210,7 @@ class UpdateManager(
             val apkFile = File(downloadDir, fileName)
 
             if (apkFile.exists()) {
+                isDownloading = false
                 progressListener?.onDownloadComplete()
                 installApk(context, apkFile)
                 return
@@ -265,6 +275,7 @@ class UpdateManager(
 
     private fun startProgressPolling(apkFile: File) {
         progressHandler = Handler(Looper.getMainLooper())
+        var failedCount = 0
         progressRunnable = object : Runnable {
             override fun run() {
                 if (currentDownloadId == -1L || downloadManager == null) return
@@ -276,6 +287,7 @@ class UpdateManager(
                         val status = cursor.getInt(statusIdx)
                         when (status) {
                             DownloadManager.STATUS_RUNNING -> {
+                                failedCount = 0
                                 val downloadedIdx =
                                     cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
                                 val totalIdx =
@@ -292,7 +304,8 @@ class UpdateManager(
                                 }
                             }
 
-                            DownloadManager.STATUS_PENDING, DownloadManager.STATUS_PENDING -> {
+                            DownloadManager.STATUS_PENDING -> {
+                                failedCount = 0
                                 Handler(Looper.getMainLooper()).post {
                                     progressListener?.onProgress("准备下载...")
                                 }
@@ -304,6 +317,12 @@ class UpdateManager(
                             }
 
                             DownloadManager.STATUS_FAILED -> {
+                                failedCount++
+                                if (failedCount < 3) {
+                                    cursor.close()
+                                    progressHandler?.postDelayed(this, 500)
+                                    return
+                                }
                                 cursor.close()
                                 Handler(Looper.getMainLooper()).post {
                                     progressListener?.onDownloadFailed()

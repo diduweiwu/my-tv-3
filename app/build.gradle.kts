@@ -17,8 +17,8 @@ android {
         applicationId = "com.lizongying.mytv3"
         minSdk = 21
         targetSdk = 35
-        versionCode = 2000300
-        versionName = "2.0.3.0"
+        versionCode = getVersionCode()
+        versionName = getVersionName()
     }
 
     buildFeatures {

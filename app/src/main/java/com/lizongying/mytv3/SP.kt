@@ -86,7 +86,7 @@ object SP {
     const val DEFAULT_POSITION_GROUP = 1
     const val DEFAULT_POSITION = 0
     const val DEFAULT_REPEAT_INFO = true
-    const val DEFAULT_CONFIG_AUTO_LOAD = true
+    const val DEFAULT_CONFIG_AUTO_LOAD = false
     var DEFAULT_SOURCES = ""
 
     private lateinit var sp: SharedPreferences
